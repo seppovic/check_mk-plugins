@@ -1,0 +1,59 @@
+title: monitor what type of Consistency Points are taken by a NetApp.
+agents: snmp
+author: Markus Weber <markus.weber@lfst.bayern.de>
+license: GPL
+distribution: check_mk
+description:
+ This check uses SNMP to report the number of Consistency Points of a Netapp.
+ A CP is triggered whenever the Filesystem reaches a point where it wants to 
+ update the physical data on the disks, with whatever has accumulated in 
+ Cache (and was journaled in NVRAM). You can specify individual Thresholds for
+ every Type of CP.
+
+{Type Explanation form mib:}
+ 
+Back to Back ({cpFromCpOps}) - If you are getting these, your filer is 
+ overloaded. The write traffic is coming in faster than it can be written and 
+ the filer is running out of NVRAM capacity in one bank before the data in the
+ other bank can be written. We got some of these during a RAID reconstruct. 
+{default Threshold: (30, 50)}
+ 
+ Deferred Back to Back ({cpFromCpDeferredOps}) - these are a worse version 
+ of the above. Definitely an overload problem.
+{default Threshold: (30, 50)}
+ 
+ Timer ({cpFromTimerOps}) - 10 seconds since the last CP – it means the system
+ is pretty idle write-wise. Note that lightly writing to a NetApp may lead to 
+ more fragmentation than writing a bit more at a time, as it does not get the 
+ opportunity to stack stripes. Exercise is good.
+ 
+ Flush ({cpFromFlushOps}) - a flush happened. I’m sure it cleared something away.
+ 
+ High Water ({cpFromHighWaterOps}) - the number of RAM buffers holding modified 
+ data exceeded a threshold. Heavy write activity.
+
+ Log Full ({cpFromLogFullOps}) - the current NVRAM bank is full and the system 
+ switches to the other one and starts writing this to disk. Very heavy write activity.
+ 
+ Low Water ({cpFromLowWaterOps}) - the number of available RAM buffers dropped 
+ below a threshold.
+ 
+ Low Datavec ({cpFromLowDatavecsOps}) - the number of available datavecs 
+ (data vectors?) dropped below a threshold.
+ 
+ Low Vbuf ({cpFromLowVbufOps}) - the number of available virtual buffers 
+ dropped below a threshold.
+ 
+ Snapshot ({cpFromSnapshotOps}) - snapshots happen. It is a NetApp. 
+ Usually triggers a bunch of Sync (Z) CPs.
+ 
+ Sync ({cpFromSyncOps}) - an internal sync – usually preparing to complete a snapshot.
+
+inventory:
+ Only one service will be created for all Consistency Points.
+
+item:
+ None
+
+perfdata:
+ Shows a graph with the summary of all Consistency Points

@@ -1,0 +1,150 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+#################################################################
+#---------------------------------------------------------------#
+# Author: Markus Weber    					#
+# Contact: markus.weber@lfst.bayern.de				#
+# License: GPL							#
+# File: netapp_cpoints						#
+# Version: 1.0							#
+# Revision: 20.08.2014						#
+# Description: Returns the number of Consistency Points  	#
+#  taken by a netapp sorted by types. 				#
+#################################################################
+
+
+# $ snmpwalk -v2c -c public netapp.IP .1.3.6.1.4.1.789.1.2.6
+#SNMPv2-SMI::enterprises.789.1.2.6.1.0 = Timeticks: (501640051) 58 days, 1:26:40.51
+#SNMPv2-SMI::enterprises.789.1.2.6.2.0 = Counter32: 1007782
+#SNMPv2-SMI::enterprises.789.1.2.6.3.0 = Counter32: 13797
+#SNMPv2-SMI::enterprises.789.1.2.6.4.0 = Counter32: 0
+#SNMPv2-SMI::enterprises.789.1.2.6.5.0 = Counter32: 1541
+#SNMPv2-SMI::enterprises.789.1.2.6.6.0 = Counter32: 6565
+#SNMPv2-SMI::enterprises.789.1.2.6.7.0 = Counter32: 1
+#SNMPv2-SMI::enterprises.789.1.2.6.8.0 = Counter32: 1359961
+#SNMPv2-SMI::enterprises.789.1.2.6.9.0 = Counter32: 0
+#SNMPv2-SMI::enterprises.789.1.2.6.10.0 = Counter32: 252258
+#SNMPv2-SMI::enterprises.789.1.2.6.11.0 = Counter32: 0
+#SNMPv2-SMI::enterprises.789.1.2.6.12.0 = Counter32: 0
+#SNMPv2-SMI::enterprises.789.1.2.6.13.0 = Counter32: 0
+#
+
+
+netapp_cpoints_default_levels = { "cpFromTimerOps" : (None, None), \
+ "cpFromSnapshotOps" : (None, None), "cpFromLowWaterOps" : (None, None), \
+ "cpFromHighWaterOps" : (None, None), "cpFromLogFullOps" : (None, None), \
+ "cpFromCpOps" : (30, 50), "cpTotalOps" : (None, None), "cpFromFlushOps" : (None, None), \
+ "cpFromSyncOps" : (None, None), "cpFromLowVbufOps" : (None, None), "cpFromCpDeferredOps" : (30, 50), \
+ "cpFromLowDatavecsOps" : (None, None),}
+
+
+def inventory_netapp_cpoints(checkname, info):
+    return [ (None, "netapp_cpoints_default_levels") ]
+
+
+def check_netapp_cpoints_getCPperMinute(countername, this_time, this_val, allow_negative=False):
+    global g_counters
+
+    # First time we see this counter? Do not return
+    # any data!
+    if not countername in g_counters:
+        g_counters[countername] = (this_time, this_val, 0)
+        # Do not suppress this check on check_mk -nv
+        if opt_dont_submit:
+            return 1.0 
+        raise MKCounterWrapped(countername, 'Counter initialization')
+
+    last_time, last_val, last_rate = g_counters.get(countername)
+    timedif = (this_time - last_time ) / 60
+    if timedif <= 0: # do not update counter
+        # Reset counter to a (hopefully) reasonable value
+        g_counters[countername] = (this_time, this_val, 0)
+        # Do not suppress this check on check_mk -nv
+        if opt_dont_submit:
+            return 1.0
+        raise MKCounterWrapped(countername, 'No time difference')
+
+    valuedif = this_val - last_val
+    if valuedif < 0 and not allow_negative:
+        # Do not try to handle wrapper counters. We do not know
+        # wether they are 32 or 64 bit. It also could happen counter
+        # reset (reboot, etc.). Better is to leave this value undefined
+        # and wait for the next check interval.
+        # Do not suppress this check on check_mk -nv
+        if opt_dont_submit:
+            return 1.0
+        raise MKCounterWrapped(countername, 'Value overflow')
+
+    rate_per_min = valuedif / timedif
+    if timedif < 1: 
+        # if timedif < 1 minute return oldval for pnp
+        # and dont update counter
+        return last_rate 
+    else:
+        # update counter for next time
+        g_counters[countername] = (this_time, this_val, rate_per_min)
+
+    return rate_per_min
+    
+
+def check_netapp_cpoints(item, params, info):
+    state = 0
+    if len(info[0]) != 12:
+        return (3, "UNKNOWN - Invalid SNMP response")
+
+    i = -1
+    names = [ "cpTotalOps", "cpFromTimerOps", "cpFromSyncOps", "cpFromSnapshotOps", \
+              "cpFromLogFullOps", "cpFromHighWaterOps", "cpFromFlushOps", "cpFromLowWaterOps",  \
+              "cpFromLowVbufOps", "cpFromLowDatavecsOps", "cpFromCpOps", "cpFromCpDeferredOps", ]
+    perfdata = []
+    this_time = int(time.time())
+    one_wrapped = False
+    output   = 'Netapp Consistency Points - '
+
+    for value in map(saveint, info[0]):
+        i = i +1
+        one_wrapped = False
+        warn, crit = params[names[i]]
+        try:
+            value_dif = check_netapp_cpoints_getCPperMinute("netapp.cpoints.%s" % names[i], this_time, value)
+        except MKCounterWrapped, e:
+            one_wrapped = e
+            perfdata.append((names[i], 0, warn, crit))
+            continue
+
+        if warn is not None and crit is not None:
+            if value_dif >= crit :
+                state = 2
+                output += "%s (!!), " % names[i]
+            elif value_dif >= warn:
+                if state < 1:
+                    state = 1
+                output += "%s (!), " % names[i]
+        perfdata.append((names[i], value_dif, warn, crit))
+
+    return (state, "%s - %s" % (nagios_state_names[state], output), perfdata)
+
+
+check_info["netapp_cpoints"] = {
+     "check_function"           : check_netapp_cpoints,
+     "group"                    : "netapp_cpoints",
+     "inventory_function"       : inventory_netapp_cpoints,
+     "service_description"      : "NetApp ConsistencyPoints",
+     "has_perfdata"             : 1,
+     "snmp_scan_function"       : lambda oid: oid("1.3.6.1.2.1.1.1.0").startswith('NetApp Release'),
+     "snmp_info"                : (
+         ".1.3.6.1.4.1.789.1.2.6", [
+                8,  # cpTotalOps
+                2,  # cpFromTimerOps
+                10, # cpFromSyncOps
+                3,  # cpFromSnapshotOps
+                6,  # cpFromLogFullOps
+                5,  # cpFromHighWaterOps
+                9,  # cpFromFlushOps
+                4,  # cpFromLowWaterOps
+                11, # cpFromLowVbufOps
+                13, # cpFromLowDatavecsOps
+                7,  # cpFromCpOps
+                12, # cpFromCpDeferredOps
+     ]),
+}
