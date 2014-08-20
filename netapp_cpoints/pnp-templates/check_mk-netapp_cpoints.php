@@ -1,10 +1,11 @@
 <?php
 
-$color = array('#222', '#00ff00', '#008a6d', '#0000ff', '#ff00ff', '#ff6044', '#fff200', '#35962b', '#69d2e7', '#bab27f', '#f51d30', '#ff0000',);
+#$color = array('#222', '#00ff00', '#008a6d', '#0000ff', '#ff00ff', '#ff6044', '#fff200', '#35962b', '#69d2e7', '#bab27f', '#f51d30', '#ff0000',);
+$color = array('#222', '#00ff00', '#008a6d', '#0000ff', '#00ffff', '#9999ff', '#4c0099', '#7f00ff', '#b266ff', '#CC99ff', '#f51d30', '#ff0000',);
 $i = 0;
 $def_1 ='';
 $def_2 ='';
-$opt[1] = '--slope-mode --vertical-label "CP / min." -l0 --title "' . $this->MACRO['DISP_HOSTNAME'] . ' / ' . $this->MACRO['DISP_SERVICEDESC'] . '"';
+$opt[1] = '--slope-mode --vertical-label "CP / Min" -l0 --title "' . $this->MACRO['DISP_HOSTNAME'] . ' / ' . $this->MACRO['DISP_SERVICEDESC'] . '"';
 $ds_name[1]=$this->MACRO['DISP_SERVICEDESC'];
 
 
