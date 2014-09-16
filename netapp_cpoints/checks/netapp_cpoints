@@ -2,14 +2,14 @@
 # -*- encoding: utf-8; py-indent-offset: 4 -*-
 #################################################################
 #---------------------------------------------------------------#
-# Author: Markus Weber    					#
-# Contact: markus.weber@lfst.bayern.de				#
-# License: GPL							#
-# File: netapp_cpoints						#
-# Version: 1.0							#
-# Revision: 20.08.2014						#
-# Description: Returns the number of Consistency Points  	#
-#  taken by a netapp sorted by types. 				#
+# Author: Markus Weber                                          #
+# Contact: markus.weber@lfst.bayern.de                          #
+# License: GPL                                                  #
+# File: netapp_cpoints                                          #
+# Version: 1.0                                                  #
+# Revision: 20.08.2014                                          #
+# Description: Returns the number of Consistency Points per     #
+#  Minute taken by a netapp sorted by types.                    #
 #################################################################
 
 
