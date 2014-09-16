@@ -24,39 +24,6 @@
 # to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
 # Boston, MA 02110-1301 USA.
 
-
-
-
-#################################################################
-#---------------------------------------------------------------#
-# Author: Markus Weber    					#
-# Contact: markus.weber@lfst.bayern.de				#
-# License: GPL							#
-# File: jolokia_metrics.						#
-# Version: 1.0							#
-# Revision: 20.08.2014						#
-# Description: Returns the number of Consistency Points  	#
-#  taken by a netapp sorted by types. 				#
-#################################################################
-
-# Sample output
-# <<<jolokia_generic>>>
-# 8080,/pwm,LoginServlet generic.errorPerRequest.requestCount 878
-# 8080,/pwm,LoginServlet generic.errorPerRequest.errorCount 0
-# 8080,/pwm,LogoutServlet generic.errorPerRequest.requestCount 1
-# 8080,/pwm,LogoutServlet generic.errorPerRequest.errorCount 0
-# 8080,/pwm,LogoutServlet generic.countAllocated 0
-
-import pprint
-
-
-
-
-
-
-
-
-
 # MB warn, crit
 #jolokia_metrics_mem_default_levels = (2000, 3000) #
 
@@ -201,7 +168,13 @@ def inventory_jolokia_metrics_apps(info, what):
         needed_key = [ "Running", "stateName" ]
         levels = None
 
-    
+    # Sample output
+    # <<<jolokia_generic>>>
+    # 8080,/pwm,LoginServlet generic.rate.errorPerRequest.requestCount 878
+    # 8080,/pwm,LoginServlet generic.rate.errorPerRequest.errorCount 0
+    # 8080,/pwm,LogoutServlet generic.rate.errorPerRequest.requestCount 1
+    # 8080,/pwm,LogoutServlet generic.rate.errorPerRequest.errorCount 0
+    # 8080,/pwm,LogoutServlet generic.gauge.countAllocated 0
     if what == 'generic':
         for inst, vals in parsed.iteritems():
             for app, appstate in vals.get('apps', {}).items():
@@ -224,7 +197,7 @@ def inventory_jolokia_metrics_apps(info, what):
                             else:
                                 continue
         return inv
-
+        
     # this handles information from BEA, they stack one level
     # higher than the rest.
     if what == 'bea_app_sess':
@@ -252,31 +225,24 @@ def check_jolokia_metrics_generic(item, params, info):
 
     output, perf, status, workvalues, workitems, workmodes = "", [], 0, [], [], []
 
-    for inst, vals in parsed.iteritems():
-            for app, appstate in vals.get('apps', {}).items():
-                if 'servlets' in appstate:
-                    for servlet in appstate['servlets']:
-                        for key in appstate['servlets'][servlet]:
-                                if key.startswith("generic.rate." + itemParts[3]):
-                                    workmodes.append('rate')
-                                elif key.startswith("generic.gauge." + itemParts[3]):
-                                    workmodes.append('gauge')
-                                else:
-                                    continue
-                                workitems.append(key.split('.')[-1])
-                                workvalues.append(appstate['servlets'][servlet][key])
+    if len(itemParts) == 4:
+        if itemParts[2] in parsed[itemParts[0]]['apps'][itemParts[1]]['servlets']:
+            base = parsed[itemParts[0]]['apps'][itemParts[1]]['servlets'].get( itemParts[2], {} )
+    elif len(itemParts) == 3:
+        if itemParts[1] in parsed[itemParts[0]]['apps']:
+            base = parsed[itemParts[0]]['apps'].get( itemParts[1], {} )
+    else:
+        base = {}
 
-                else:
-                    for key in appstate:
-                        if key.startswith("generic.rate." + itemParts[3]):
-                            workmodes.append('rate')
-                        elif key.startswith("generic.gauge." + itemParts[3]):
-                            workmodes.append('gauge')
-                        else:
-                            continue
-                        workitems.append(key.split('.')[-1])
-                        workvalues.append(appstate['servlets'][servlet][key])
-
+    for key in base:
+        if key.startswith("generic.rate." + itemParts[-1]):
+            workmodes.append('rate')
+        elif key.startswith("generic.gauge." + itemParts[-1]):
+            workmodes.append('gauge')
+        else:
+            continue
+        workitems.append(key.split('.')[-1])
+        workvalues.append(base[key])
 
     if workmodes[0] == 'gauge':
         for i in range(len(workitems)):
@@ -286,19 +252,24 @@ def check_jolokia_metrics_generic(item, params, info):
         if len(workitems) == 1:
             # rate per minute
             timedif, rate = get_counter( "jolokia_metrics.generic.%s" % (itemParts[3]), time.time(), savefloat(workvalues[0]) )
-            rate= rate * 60.0
+            rate = rate * 60.0
             output += "%.2f %s/min with a total of %.2f" % (rate, workitems[0], savefloat(workvalues[0]))
             perf.append( (workitems[0], rate) )
-        elif len(workitems) == 2 and workvalues[0] > workvalues[1]:
-            # rate of 2 values 
-            rate = savefloat(workvalues[1])/savefloat(workvalues[0])
-            output += "The rate of %s / %s = %.2f" % (workitems[1], workitems[0], rate)
-            perf.append( ("%sPER%s" % (workitems[1], workitems[0]), rate) )
-        else:
-            # rate of 2 values reverse
-            rate = savefloat(workvalues[0])/savefloat(workvalues[1])
-            output += "The rate of %s / %s = %.2f" % (workitems[0], workitems[1], rate)
-            perf.append( ("%sPER%s" % (workitems[0], workitems[1]), rate) )
+        elif len(workitems) == 2:
+            if workvalues[0] == 0 and workvalues[1] == 0:
+                output += "The rate of %s / %s = %.2f" % (workitems[1], workitems[0], 0)
+                perf.append( ("%sPER%s" % (workitems[1], workitems[0]), 0) )
+            elif workvalues[0] > workvalues[1]:
+                # rate of 2 values 
+                rate = savefloat(workvalues[1])/savefloat(workvalues[0])
+                output += "The rate of %s / %s = %.2f" % (workitems[1], workitems[0], rate)
+                perf.append( ("%sPER%s" % (workitems[1], workitems[0]), rate) )
+            else:
+                # rate of 2 values reverse
+                rate = savefloat(workvalues[0])/savefloat(workvalues[1])
+                output += "The rate of %s / %s = %.2f" % (workitems[0], workitems[1], rate)
+                perf.append( ("%sPER%s" % (workitems[0], workitems[1]), rate) )
+
     return (status, output, perf)
 
 
