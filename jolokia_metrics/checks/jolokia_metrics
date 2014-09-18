@@ -188,14 +188,14 @@ def inventory_jolokia_metrics_apps(info, what):
                                             inv.append( ('%s %s %s %s' % (inst, app, servlet, keyparts[2]), None) )
                                     else:
                                         continue
-                else:
-                    for key in appstate:
-                        if key.startswith("generic."):
-                            keyparts = key.split(".")
-                            if (len(keyparts) == 3 or len(keyparts) == 4) and ('%s %s %s %s' % (inst, app, servlet, keyparts[2]), None) not in inv:
-                                inv.append( ('%s %s %s %s' % (inst, app, servlet, keyparts[2]), None) )
-                            else:
-                                continue
+
+                for key in appstate:
+                    if key.startswith("generic."):
+                        keyparts = key.split(".")
+                        if (len(keyparts) == 3 or len(keyparts) == 4) and ('%s %s %s' % (inst, app, keyparts[2]), None) not in inv:
+                            inv.append( ('%s %s %s' % (inst, app, keyparts[2]), None) )
+                        else:
+                            continue
         return inv
         
     # this handles information from BEA, they stack one level
