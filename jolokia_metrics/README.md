@@ -6,14 +6,13 @@ jolokia.cfg for examples.
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/blob/master/jolokia_metrics/jolokia_metrics-1.0.mkp'
-* OMD[SITENAME]:~$ check_mk -P install jolokia_metrics-1.0.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/blob/master/jolokia_metrics/jolokia_metrics-1.1.mkp'
+* OMD[SITENAME]:~$ check_mk -P install jolokia_metrics-1.1.mkp
 
 # Requirements
 * Application server with [jolokia](http://jolokia.org/) deployed.
 
 # TODO
-* include pnp-template
 * make thresholds configurable via WATO
 * testing special cases (division by zero?)
 
@@ -21,4 +20,6 @@ jolokia.cfg for examples.
 * None so far.
 
 # History
-* 1.0 first release
+* 1.1   Added pnp-template
+* 1.0.1 Bugfix in inventory definition
+* 1.0   first release
