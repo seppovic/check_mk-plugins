@@ -51,7 +51,7 @@ jolokia_metrics_tp_default_levels = {
 }
 
 # Number of low warn, low crit, high warn, high crit
-jolokia_metrics_generic_default_levels = (-1, -1, 0, 0)
+jolokia_metrics_generic_default_levels = (-1.0, -1.0, 0.0, 0.0)
 
 def jolokia_metrics_parse(info):
     parsed = {}
