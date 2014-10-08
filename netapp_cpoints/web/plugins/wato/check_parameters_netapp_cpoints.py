@@ -4,7 +4,7 @@ subgroup_storage = _("Storage, Filesystems and Files")
 register_check_parameters(
      subgroup_storage,
     "netapp_cpoints",
-    _("Netapp Consitency Points"),
+    _("Netapp Consistency Points"),
     Dictionary(
           help = _("Here you can override the default levels for the Netapp Consistency Points check. The levels "
                    "are applied on the number of Consistency Points made since last checktime."),

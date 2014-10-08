@@ -50,6 +50,9 @@ jolokia_metrics_tp_default_levels = {
             'currentThreadsCount': (None, None)
 }
 
+# Number of low warn, low crit, high warn, high crit
+jolokia_metrics_generic_default_levels = (-1, -1, 0, 0)
+
 def jolokia_metrics_parse(info):
     parsed = {}
     for inst, var, value in info:
@@ -176,6 +179,8 @@ def inventory_jolokia_metrics_apps(info, what):
     # 8080,/pwm,LogoutServlet generic.rate.errorPerRequest.errorCount 0
     # 8080,/pwm,LogoutServlet generic.gauge.countAllocated 0
     if what == 'generic':
+        levels = 'jolokia_metrics_generic_default_levels'
+
         for inst, vals in parsed.iteritems():
             for app, appstate in vals.get('apps', {}).items():
                 if 'servlets' in appstate:
@@ -185,7 +190,7 @@ def inventory_jolokia_metrics_apps(info, what):
                                 if key.startswith("generic."):
                                     keyparts = key.split(".")
                                     if (len(keyparts) == 4 or len(keyparts) == 3) and ('%s %s %s %s' % (inst, app, servlet, keyparts[2]), None) not in inv:
-                                            inv.append( ('%s %s %s %s' % (inst, app, servlet, keyparts[2]), None) )
+                                            inv.append( ('%s %s %s %s' % (inst, app, servlet, keyparts[2]), levels) )
                                     else:
                                         continue
 
@@ -193,9 +198,10 @@ def inventory_jolokia_metrics_apps(info, what):
                     if key.startswith("generic."):
                         keyparts = key.split(".")
                         if (len(keyparts) == 3 or len(keyparts) == 4) and ('%s %s %s' % (inst, app, keyparts[2]), None) not in inv:
-                            inv.append( ('%s %s %s' % (inst, app, keyparts[2]), None) )
+                            inv.append( ('%s %s %s' % (inst, app, keyparts[2]), levels) )
                         else:
                             continue
+        # return here. we dont want app_sess to wrongly inventorize generic values
         return inv
         
     # this handles information from BEA, they stack one level
@@ -220,6 +226,7 @@ def inventory_jolokia_metrics_apps(info, what):
 
 
 def check_jolokia_metrics_generic(item, params, info):
+    lo_warn, lo_crit, hi_warn, hi_crit = params
     parsed = jolokia_metrics_parse(info)
     itemParts = item.split()
 
@@ -242,23 +249,62 @@ def check_jolokia_metrics_generic(item, params, info):
         else:
             continue
         workitems.append(key.split('.')[-1])
-        workvalues.append(base[key])
+        workvalues.append(savefloat(base[key]))
 
     if workmodes[0] == 'gauge':
         for i in range(len(workitems)):
-            output += "%s is %s; " % (workitems[i], workvalues[i])
+
+            if lo_crit is not None and workvalues[i] <= lo_crit:
+                status = 2
+                output += "%s is %s (!!); " % (workitems[i], workvalues[i])
+
+            elif lo_warn is not None and workvalues[i] <= lo_warn:
+                status = 1
+                output += "%s is %s (!); " % (workitems[i], workvalues[i])
+
+            elif hi_crit is not None and hi_crit != 0.0 and workvalues[i] >= hi_crit:
+                status = 2
+                output += "%s is %s (!!); " % (workitems[i], workvalues[i])
+
+            elif hi_warn is not None and hi_warn != 0.0 and workvalues[i] >= hi_warn:
+                status = 1
+                output += "%s is %s (!); " % (workitems[i], workvalues[i])
+
+            else:
+                output += "%s is %s; " % (workitems[i], workvalues[i])
+
             perf.append((workitems[i], workvalues[i]))
     else:
         if len(workitems) == 1:
             # rate per minute
             timedif, rate = get_counter( "jolokia_metrics.generic.%s" % (itemParts[3]), time.time(), savefloat(workvalues[0]) )
             rate = rate * 60.0
-            output += "%.2f %s/min with a total of %.2f" % (rate, workitems[0], savefloat(workvalues[0]))
+
+            if lo_crit is not None and rate <= lo_crit:
+                status = 2
+                output += "%.2f %s/min (!!) with a total of %.2f" % (rate, workitems[0], savefloat(workvalues[0]))
+
+            elif lo_warn is not None and rate <= lo_warn:
+                status = 1
+                output += "%.2f %s/min (!) with a total of %.2f" % (rate, workitems[0], savefloat(workvalues[0]))
+
+            elif hi_crit is not None and hi_crit != 0.0 and rate >= hi_crit:
+                status = 2
+                output += "%.2f %s/min (!!) with a total of %.2f" % (rate, workitems[0], savefloat(workvalues[0]))
+
+            elif hi_warn is not None and hi_warn != 0.0 and rate >= hi_warn:
+                status = 1
+                output += "%.2f %s/min (!) with a total of %.2f" % (rate, workitems[0], savefloat(workvalues[0]))
+
+            else:
+                output += "%.2f %s/min with a total of %.2f" % (rate, workitems[0], savefloat(workvalues[0]))
+
             perf.append( (workitems[0], rate) )
         elif len(workitems) == 2:
             if workvalues[0] == 0 and workvalues[1] == 0:
-                output += "The rate of %s / %s = %.2f" % (workitems[1], workitems[0], 0)
-                perf.append( ("%sPER%s" % (workitems[1], workitems[0]), 0) )
+                rate = 0
+                output += "The rate of %s / %s = %.2f" % (workitems[1], workitems[0], rate)
+                perf.append( ("%sPER%s" % (workitems[1], workitems[0]), rate) )
             elif workvalues[0] > workvalues[1]:
                 # rate of 2 values 
                 rate = savefloat(workvalues[1])/savefloat(workvalues[0])
@@ -270,6 +316,17 @@ def check_jolokia_metrics_generic(item, params, info):
                 output += "The rate of %s / %s = %.2f" % (workitems[0], workitems[1], rate)
                 perf.append( ("%sPER%s" % (workitems[0], workitems[1]), rate) )
 
+            if lo_crit is not None and rate <= lo_crit:
+                status = 2
+            elif lo_warn is not None and rate <= lo_warn:
+                status = 1
+            elif hi_crit is not None and hi_crit != 0.0 and rate >= hi_crit:
+                status = 2
+            elif hi_warn is not None and hi_warn != 0.0 and rate >= hi_warn:
+                status = 1
+        else:
+            status = 3
+            output += "something went wrong! Found more then 2 values in rate mode."
     return (status, output, perf)
 
 
