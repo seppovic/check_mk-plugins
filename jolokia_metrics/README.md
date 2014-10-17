@@ -13,11 +13,13 @@ jolokia.cfg for examples.
 * Application server with [jolokia](http://jolokia.org/) deployed.
 
 # TODO
+* Better WATO plugin.
+* String checking.
 
 # Known issues
-* None so far.
 
 # History
+* 1.2.1 Fixed minor Bug in rate mode with 1 value
 * 1.2   Added WATO plugin and checkman
 * 1.1   Added pnp-template
 * 1.0.1 Bugfix in inventory definition

@@ -251,7 +251,7 @@ for inst in instances:
         ( "mode",     mode ),
         ( "suburi",   suburi ),
         ( "instance", instance ),
-	( "vars", vars)]:
+        ( "vars", vars)]:
         if varname not in inst:
             inst[varname] = value
     if not inst["instance"]:

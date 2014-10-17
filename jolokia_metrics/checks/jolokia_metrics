@@ -7,7 +7,7 @@
 # |           | |___| | | |  __/ (__|   <    | |  | | . \            |
 # |            \____|_| |_|\___|\___|_|\_\___|_|  |_|_|\_\           |
 # |                                                                  |
-# | Copyright Mathias Kettner 2013             mk@mathias-kettner.de |
+# | Copyright Mathias Kettner 2014             mk@mathias-kettner.de |
 # +------------------------------------------------------------------+
 #
 # This file is part of Check_MK.
@@ -277,7 +277,7 @@ def check_jolokia_metrics_generic(item, params, info):
     else:
         if len(workitems) == 1:
             # rate per minute
-            timedif, rate = get_counter( "jolokia_metrics.generic.%s" % (itemParts[3]), time.time(), savefloat(workvalues[0]) )
+            timedif, rate = get_counter( "jolokia_metrics.generic.%s" % (itemParts[-1]), time.time(), savefloat(workvalues[0]) )
             rate = rate * 60.0
 
             if lo_crit is not None and rate <= lo_crit:
