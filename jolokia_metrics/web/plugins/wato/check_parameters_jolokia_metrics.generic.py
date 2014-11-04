@@ -5,35 +5,34 @@ register_check_parameters(
      subgroup_applications,
     "jvm_generic",
     _("JVM MBean levels"),
-    Tuple(
-        help = _("This rule sets the warn and crit levels for the user defined MBeans."
-                 " There is no unit to specify, because it depends on the plugin output."),
+    Dictionary(
         elements = [
-            Float(
-                title = _("Warning if below"),
-                unit = _("rate/gauge value"),
-                default_value = -1.0,
+            (   "levels",
+                Tuple(
+                    title = _("Thresholds for Nummeric values"),
+                    help = _("set the warn and crit levels for gauge or rate values."),
+                    elements = [
+                        Float( title = _("Warning if below"), default_value = -1.0),
+                        Float( title = _("Critical if below"), default_value = -1.0),
+                        Float( title = _("Warning if above"), default_value = 0.0),
+                        Float( title = _("Critical if below"), default_value = 0.0),
+                    ]
+                )
             ),
-            Float(
-                title = _("Critical if below"),
-                unit = _("rate/gauge value"),
-                default_value = -1.0,
+            (   "expectedStrings",
+                ListOf(
+                    TextAscii( title =_("Expected string(s)")),
+                    title = _("Expected strings"),
+                    help = _("specifiy all values which you expect to be ok. (regexes are supported, negating strings can also be done using regex)")
+                )
+                
             ),
-            Float(
-                title = _("Warning if above"),
-                unit = _("rate/gauge value"),
-                default_value = 0.0,
-            ),
-            Float(
-                title = _("Critical if above"),
-                unit = _("rate/gauge value"),
-                default_value = 0.0,
-            ),
-        ]
+        ],
+        optional_keys = ["levels", "expectedStrings"]
     ),
     TextAscii(
-        title = _("MBean/Attribute"),
-        allow_empty = False
+        title = _("Item Name"),
+        help = _("Name of the Service description without the JVM prefix")
     ),
     "first"
 )

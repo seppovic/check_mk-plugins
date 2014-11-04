@@ -6,26 +6,31 @@ license: GPL
 distribution: check_mk
 description:
  This Check allows to monitor any given MBean/Attribute of an Application server.
+ It is possible to monitor nummeric, either as rate or as gauge value and Strings
+ matching a given List of Parameters.
 
  To use this plugin, Jolokia and the agent plugin need to be deployed
  on the monitored server in each application container.
 
- The check can alert if the values fall or climb to configurable {WARN}/{CRIT} thresholds.
+ The check can alert if the values fall or climb to configurable {WARN}/{CRIT} thresholds
+ or the value is not in a list of strings.
 
- For Configuration of the agent see cfg_examples/jolokia.cfg
+ For Configuration of the agent see cfg_examples/jolokia.cfg.
+ Thresholds are configurable in WATO.
 
 
 item:
  The name of the application server instance or Servlet as configured by the agent.
 
 perfdata:
- The rate or gauge value(s) as configured by the agent.
+ The rate or gauge value(s) as configured by the agent or none on strings.
 
 inventory:
  One check is created for each configuration item on the agent side.
 
 
 [parameters]
+For nummeric Values:
 low_warn (float): If the value falls to this level,
  a WARNING state is triggered
 low_crit (float): If the value falls to this level,
@@ -35,6 +40,12 @@ high_warn (float): If the value climbs to this level,
 high_crit (float): If the value climbs to this level,
  a CRITICAL state is triggered
 
+For String Values:
+expectedStrings (Array of Strings): A CRITICAL state is triggered if 
+ the MBean/Attribute returns a value not specified in this list. An empty list
+ does will always return OK state.
+
 [configuration]
-jolokia_metrics_generic_default_levels(float, float, float, float ): Default levels warning and critical
+jolokia_metrics_generic_default_levels: { "levels" : (float, float, float, float), "expectedStrings" : [] }
+Default levels: { "levels" : (-1.0, -1.0, 0.0, 0.0), "expectedStrings" : [] }
 
