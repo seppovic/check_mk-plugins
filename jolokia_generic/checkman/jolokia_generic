@@ -46,6 +46,6 @@ expectedStrings (Array of Strings): A CRITICAL state is triggered if
  does will always return OK state.
 
 [configuration]
-jolokia_metrics_generic_default_levels: { "levels" : (float, float, float, float), "expectedStrings" : [] }
+jolokia_generic_default_levels: { "levels" : (float, float, float, float), "expectedStrings" : [] }
 Default levels: { "levels" : (-1.0, -1.0, 0.0, 0.0), "expectedStrings" : [] }
 

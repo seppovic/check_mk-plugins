@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import urllib2, sys, os, socket, pprint
+import urllib2, sys, os, socket
 
 opt_debug = '--debug' in sys.argv
 
@@ -118,12 +118,7 @@ def query_instance(inst):
        return
 
     sys.stdout.write('<<<jolokia_metrics>>>\n')
-    # Fetch the general information first
-    generic = []
-    if inst.get("vars", []):
-        for path, title, itemspec in inst.get("vars", []):
-            generic.append( (path, "generic.%s" % title, itemspec) )
-    for path, title, itemspec in global_vars + specific_vars.get(product, []) + generic:
+    for path, title, itemspec in global_vars + specific_vars.get(product, []):
         try:
             values = fetch_var(inst["server"], inst["port"], "read/" + path, inst["suburi"], itemspec)
 
@@ -159,6 +154,62 @@ def query_instance(inst):
                 tit = subinstance[-1]
 
             sys.stdout.write("%s %s %s\n" % (item.replace(" ", "_"), tit.replace(" ", "_"), value))
+
+
+    # extension for generic values
+    sys.stdout.write('<<<jolokia_generic>>>\n')
+    generic = []
+    if inst.get("vars", []):
+        for path, title, itemspec in inst.get("vars", []):
+            generic.append( (path, "generic.%s" % title, itemspec) )
+    for path, title, itemspec in generic:
+        try:
+            values = fetch_var(inst["server"], inst["port"], "read/" + path, inst["suburi"], itemspec)
+
+        # In case of network errors skip this server
+        except IOError:
+            return
+        except socket.timeout:
+            return
+        except:
+            if opt_debug:
+                raise
+            # Simply ignore exceptions. Need to be removed for debugging
+            continue
+
+        flag=0
+        for subinstance, value in values:
+            if not subinstance and not title:
+                print "INTERNAL ERROR: %s" % value
+                continue
+
+            if "threadStatus" in subinstance or "threadParam" in subinstance:
+                continue
+
+            if len(subinstance) > 1:
+                item = ",".join((inst["instance"],) + subinstance[:-1])
+            elif not subinstance:
+                if flag == 0:
+                    values += make_item_list((),{path: value}, itemspec)
+                    flag=1
+                    continue
+                else:
+                    sys.stdout.write("ERROR")
+                    flag=0
+                    continue
+            else:
+                item = inst["instance"]
+            if title:
+                if subinstance:
+                    tit = title + "." + subinstance[-1]
+                else:
+                    tit = title
+            else:
+                tit = subinstance[-1]
+
+            sys.stdout.write("%s %s %s\n" % (item.replace(" ", "_"), tit.replace(" ", "_"), value))
+            flag=0
+
 
 
 # Default configuration for all instances
@@ -237,7 +288,7 @@ if os.path.exists(conffile):
 # supports timeout parameter for the urllib2.urlopen method
 # but we are on a python 2.5 system here which seem to use the
 # default socket timeout. We are local here so  set it to 1 second.
-socket.setdefaulttimeout(1.0)
+socket.setdefaulttimeout(2.0)
 
 # Compute list of instances to monitor. If the user has defined
 # instances in his configuration, we will use this (a list

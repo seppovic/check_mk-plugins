@@ -5,8 +5,8 @@
 # Author: Markus Weber                                          #
 # Contact: markus.weber@lfst.bayern.de                          #
 # License: GPL                                                  #
-# File: jolokia_metrics                                         #
-# Version: 2.0                                                  #
+# File: jolokia_generic                                         #
+# Version: 2.1.1                                                #
 # Revision: 03.11.2014                                          #
 # Description: This Check allows to monitor any given           #
 #  MBean/Attribute of an Application server.                    #
@@ -29,13 +29,13 @@
 
 
 # Default levels for low warn, low crit, high warn, high crit and a empty list for string mode
-factory_settings["jolokia_metrics_generic_default_levels"] = { "levels" : (-1.0, -1.0, 0.0, 0.0), "expectedStrings" : [] }
+factory_settings["jolokia_generic_default_levels"] = { "levels" : (-1.0, -1.0, 0.0, 0.0), "expectedStrings" : [] }
 
-def inventory_jolokia_metrics_generic(info):
+def inventory_jolokia_generic(info):
     inv = []
     parsed = jolokia_metrics_parse(info)
 
-    for inst, vals in parsed.iteritems():
+    for inst, vals in parsed.items():
         for app, appstate in vals.get('apps', {}).items():
             if 'servlets' in appstate:
                 for servlet in appstate['servlets']:
@@ -56,9 +56,17 @@ def inventory_jolokia_metrics_generic(info):
                         inv.append( ('%s %s %s' % (inst, app, keyparts[2]), {} ) )
                     else:
                         continue
+
+        for key in vals:
+            if key.startswith("generic."):
+                keyparts = key.split(".")
+                if (len(keyparts) == 4 or len(keyparts) == 3) and ('%s %s' % (inst, keyparts[2]), {}) not in inv:
+                    inv.append( ('%s %s' % (inst, keyparts[2]), {} ) )
+                else:
+                    continue
     return inv
 
-def check_jolokia_metrics_generic(item, params, info):
+def check_jolokia_generic(item, params, info):
     import re
     parsed = jolokia_metrics_parse(info)
     itemParts = item.split()
@@ -70,6 +78,9 @@ def check_jolokia_metrics_generic(item, params, info):
     elif len(itemParts) == 3:
         if itemParts[1] in parsed[itemParts[0]]['apps']:
             base = parsed[itemParts[0]]['apps'].get( itemParts[1], {} )
+    elif len(itemParts) == 2:
+        if itemParts[0] in parsed:
+            base = parsed.get( itemParts[0], {} )
     else:
         base = {}
 
@@ -137,7 +148,7 @@ def check_jolokia_metrics_generic(item, params, info):
                 lo_warn, lo_crit, hi_warn, hi_crit = params["levels"] 
 
             # rate per minute
-            timedif, rate = get_counter( "jolokia_metrics.generic.%s" % (itemParts[-1]), time.time(), savefloat(workvalues[0]) )
+            timedif, rate = get_counter( "jolokia_generic.%s" % (itemParts[-1]), time.time(), savefloat(workvalues[0]) )
             rate = rate * 60.0
 
             if lo_crit is not None and rate <= lo_crit:
@@ -191,11 +202,12 @@ def check_jolokia_metrics_generic(item, params, info):
             output += "something went wrong! Found more then 2 values in rate mode."
     return (status, output, perf)
 
-check_info["jolokia_metrics.generic"] = {
-    "service_description" : "JVM %s",
-    "check_function"      : check_jolokia_metrics_generic,
-    "inventory_function"  : inventory_jolokia_metrics_generic,
-    "default_levels_variable" : "jolokia_metrics_generic_default_levels",
-    "group"               : "jvm_generic",
-    "has_perfdata"        : True,
+check_info["jolokia_generic"] = {
+    "service_description"     : "JVM %s",
+    "check_function"          : check_jolokia_generic,
+    "inventory_function"      : inventory_jolokia_generic,
+    "default_levels_variable" : "jolokia_generic_default_levels",
+    "group"                   : "jvm_generic",
+    "includes"                : [ "jolokia_metrics" ],
+    "has_perfdata"            : True,
 }
