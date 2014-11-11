@@ -6,8 +6,8 @@
 # Contact: markus.weber@lfst.bayern.de                          #
 # License: GPL                                                  #
 # File: jolokia_generic                                         #
-# Version: 2.1.1                                                #
-# Revision: 03.11.2014                                          #
+# Version: 2.2                                                  #
+# Revision: 11.11.2014                                          #
 # Description: This Check allows to monitor any given           #
 #  MBean/Attribute of an Application server.                    #
 #################################################################
@@ -29,7 +29,7 @@
 
 
 # Default levels for low warn, low crit, high warn, high crit and a empty list for string mode
-factory_settings["jolokia_generic_default_levels"] = { "levels" : (-1.0, -1.0, 0.0, 0.0), "expectedStrings" : [] }
+factory_settings["jolokia_generic_default_levels"] = { "levels" : [(-1.0, -1.0, 0.0, 0.0, '')], "expectedStrings" : [] }
 
 def inventory_jolokia_generic(info):
     inv = []
@@ -100,10 +100,12 @@ def check_jolokia_generic(item, params, info):
 
     if workmodes[0] == 'gauge':
         for i in range(len(workitems)):
-            if workitems[i] in params:
-                lo_warn, lo_crit, hi_warn, hi_crit = params[workitems[i]]
+            thresholds = [p for p in params["levels"] if p[4] == workitems[i]]
+
+            if thresholds:
+                lo_warn, lo_crit, hi_warn, hi_crit, notused = thresholds[0]
             else:
-                lo_warn, lo_crit, hi_warn, hi_crit = params["levels"] 
+                lo_warn, lo_crit, hi_warn, hi_crit, notused = factory_settings["jolokia_generic_default_levels"]["levels"][0]
 
             if lo_crit is not None and workvalues[i] <= lo_crit:
                 status = 2
@@ -142,10 +144,11 @@ def check_jolokia_generic(item, params, info):
                 output += "%s is %s; " % (workitems[i], workvalues[i])
     else:
         if len(workitems) == 1:
-            if workitems[0] in params:
-                lo_warn, lo_crit, hi_warn, hi_crit = params[workitems[0]]
+            thresholds = [p for p in params["levels"] if p[4] == workitems[0]]
+            if thresholds:
+                lo_warn, lo_crit, hi_warn, hi_crit, notused = thresholds[0]
             else:
-                lo_warn, lo_crit, hi_warn, hi_crit = params["levels"] 
+                lo_warn, lo_crit, hi_warn, hi_crit, notused = factory_settings["jolokia_generic_default_levels"]["levels"][0] 
 
             # rate per minute
             timedif, rate = get_counter( "jolokia_generic.%s" % (itemParts[-1]), time.time(), savefloat(workvalues[0]) )
@@ -172,7 +175,7 @@ def check_jolokia_generic(item, params, info):
 
             perf.append( (workitems[0], rate) )
         elif len(workitems) == 2:
-            lo_warn, lo_crit, hi_warn, hi_crit = params["levels"] 
+            lo_warn, lo_crit, hi_warn, hi_crit, notused = params["levels"][0]
 
             if workvalues[0] == 0 and workvalues[1] == 0:
                 rate = 0

@@ -8,20 +8,29 @@ register_check_parameters(
     Dictionary(
         elements = [
             (   "levels",
-                Tuple(
+                ListOf(
+
+
+                    Tuple(
+                        title = _("bla"),
+                        elements = [
+                            Float( title = _("Warning if below"), default_value = -1.0 ),
+                            Float( title = _("Critical if below"), default_value = -1.0 ),
+                            Float( title = _("Warning if above"), default_value = 0.0 ),
+                            Float( title = _("Critical if below"), default_value = 0.0 ),
+                            TextAscii( 
+                                   title = _("Name of the MBean/Attribute (optional)"), 
+                                   help = _("This might be helpful if you group some values together and want the Threshold only on a particular value.") 
+                            ),
+                        ],
+                    ),
                     title = _("Thresholds for Nummeric values"),
                     help = _("set the warn and crit levels for gauge or rate values."),
-                    elements = [
-                        Float( title = _("Warning if below"), default_value = -1.0),
-                        Float( title = _("Critical if below"), default_value = -1.0),
-                        Float( title = _("Warning if above"), default_value = 0.0),
-                        Float( title = _("Critical if below"), default_value = 0.0),
-                    ]
-                )
+                    movable = False,
+                ),
             ),
             (   "expectedStrings",
-                ListOf(
-                    TextAscii( title =_("Expected string(s)")),
+                ListOfStrings(
                     title = _("Expected strings"),
                     help = _("specifiy all values which you expect to be ok. (regexes are supported, negating strings can also be done using regex)")
                 )

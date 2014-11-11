@@ -6,8 +6,8 @@ jolokia.cfg in agents/cfg_examples/ folder for an example.
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/jolokia_generic/jolokia_generic-2.1.1.mkp'
-* OMD[SITENAME]:~$ check_mk -P install jolokia_generic-2.1.1.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/jolokia_generic/jolokia_generic-2.2.mkp'
+* OMD[SITENAME]:~$ check_mk -P install jolokia_generic-2.2.mkp
 
 # Requirements
 * Application server with [jolokia](http://jolokia.org/) deployed.
@@ -15,9 +15,11 @@ jolokia.cfg in agents/cfg_examples/ folder for an example.
 
 # TODO
 * update pnp-template to keep highest values in the background.
+
 # Known issues
 
 # History
+* 2.2   Added funktionality to specify thresholds for each value in a service
 * 2.1.1 Fixed Case where we don't get an application field back from the agent (e.g. Alfresco starts its own MBean Server)
 * 2.1   Added funktionality for string checking; Converted to Dictionary based parameters
 * 2.0   Plugin Renamed from jolokia_metrics to jolokia_generic and use original jolokia_metrics as includefile
