@@ -8,7 +8,7 @@ Consistency Point type.
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/blob/master/netapp_cpoints/netapp_cpoints-1.0.mkp'
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/netapp_cpoints/netapp_cpoints-1.0.mkp'
 * OMD[SITENAME]:~$ check_mk -P install netapp_cpoints-1.0.mkp
 
 # Requirements

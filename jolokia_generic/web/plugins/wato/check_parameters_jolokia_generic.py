@@ -9,15 +9,13 @@ register_check_parameters(
         elements = [
             (   "levels",
                 ListOf(
-
-
                     Tuple(
                         title = _("bla"),
                         elements = [
                             Float( title = _("Warning if below"), default_value = -1.0 ),
                             Float( title = _("Critical if below"), default_value = -1.0 ),
                             Float( title = _("Warning if above"), default_value = 0.0 ),
-                            Float( title = _("Critical if below"), default_value = 0.0 ),
+                            Float( title = _("Critical if above"), default_value = 0.0 ),
                             TextAscii( 
                                    title = _("Name of the MBean/Attribute (optional)"), 
                                    help = _("This might be helpful if you group some values together and want the Threshold only on a particular value.") 

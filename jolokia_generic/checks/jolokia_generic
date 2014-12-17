@@ -98,9 +98,12 @@ def check_jolokia_generic(item, params, info):
             continue
         workitems.append(key.split('.')[-1])
 
+    if not workitems:
+        raise MKCounterWrapped(None, "Service is stale, found no data for: %s " % item)
+
     if workmodes[0] == 'gauge':
         for i in range(len(workitems)):
-            thresholds = [p for p in params["levels"] if p[4] == workitems[i]]
+            thresholds = [p for p in params["levels"] if p[4] == workitems[i] or p[4] == '' ]
 
             if thresholds:
                 lo_warn, lo_crit, hi_warn, hi_crit, notused = thresholds[0]
@@ -144,7 +147,7 @@ def check_jolokia_generic(item, params, info):
                 output += "%s is %s; " % (workitems[i], workvalues[i])
     else:
         if len(workitems) == 1:
-            thresholds = [p for p in params["levels"] if p[4] == workitems[0]]
+            thresholds = [p for p in params["levels"] if p[4] == workitems[0] or p[4] == '' ]
             if thresholds:
                 lo_warn, lo_crit, hi_warn, hi_crit, notused = thresholds[0]
             else:
