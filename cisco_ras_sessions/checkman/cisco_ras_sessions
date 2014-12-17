@@ -1,0 +1,24 @@
+title: Remote Access Sessions on Cisco Devices from ciscoRemoteAccessMonitorMIB
+agents: snmp
+author: Markus Weber <markus.weber@lfst.bayern.de>
+license: GPL
+distribution: check_mk
+description:
+ This check uses SNMP to report the number of active Remote Access Sessions for
+ the following VPN protocols:
+ - layer 2 (PPTP, L2TP, L2F)
+ - layer 3 (IPsec) and 
+ - layer 4 (SSL)
+
+ Thresholds can be configured using wato or using 
+ checkgroup_parameters['cisco_ras_sessions'] in main.mk
+
+
+inventory:
+ A service will only be created if "PeakConcurrentSessions" of the desired protocol is greater then zero.
+
+item:
+ Check item is the Protocol of the tunnel.
+
+perfdata:
+ One value: the number of current Sessions.

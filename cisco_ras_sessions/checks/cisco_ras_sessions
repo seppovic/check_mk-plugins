@@ -1,0 +1,81 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+#################################################################
+#---------------------------------------------------------------#
+# Author: Markus Weber                                          #
+# Contact: markus.weber@lfst.bayern.de                          #
+# License: GPL                                                  #
+# File: cisco_ras_sessions                                      #
+# Version: 1.0                                                  #
+# Revision: 18.12.2014                                          #
+# Description: Returns the number of active Remote Access       #
+# Sessions on Cisco ASA Devices.                                #
+#################################################################
+
+
+# $ snmpwalk -v2c -c public ASA.IP .1.3.6.1.4.1.9.9.392.1.3.{26,28,29,31,32,34,35,37,38,40}
+# SNMPv2-SMI::enterprises.9.9.392.1.3.26.0 = Gauge32: 128
+# SNMPv2-SMI::enterprises.9.9.392.1.3.28.0 = Gauge32: 153
+# SNMPv2-SMI::enterprises.9.9.392.1.3.29.0 = Gauge32: 0
+# SNMPv2-SMI::enterprises.9.9.392.1.3.31.0 = Gauge32: 0
+# SNMPv2-SMI::enterprises.9.9.392.1.3.32.0 = Gauge32: 0
+# SNMPv2-SMI::enterprises.9.9.392.1.3.34.0 = Gauge32: 0
+# SNMPv2-SMI::enterprises.9.9.392.1.3.35.0 = Gauge32: 0
+# SNMPv2-SMI::enterprises.9.9.392.1.3.37.0 = Gauge32: 0
+# SNMPv2-SMI::enterprises.9.9.392.1.3.38.0 = Gauge32: 0
+# SNMPv2-SMI::enterprises.9.9.392.1.3.40.0 = Gauge32: 0
+
+factory_settings["cisco_ras_sessions_levels"] = { "IPSec" : (-1, -1), "L2L" : (-1, -1), "LB" : (-1, -1), "SVC" : (-1, -1), "WebVPN" : (-1, -1) }
+cisco_ras_names = ("IPSec", "L2L", "LB", "SVC", "WebVPN")
+
+def inventory_cisco_ras_sessions(info):
+    inv = []
+    for i in range(0, len(info[0])-1, 2):
+        if info[0][i+1] != 0:
+            inv.append( (cisco_ras_names[i%2], {} ) )
+    return inv 
+
+def check_cisco_ras_sessions(item, params, info):
+    if len(info[0]) != 10:
+        return (3, "UNKNOWN - Invalid SNMP response")
+
+    status = 0
+    thresholds = params.get(item, [])
+    value = info[0][(cisco_ras_names.index(item) * 2)]
+    output = ""
+    perf = [(item, value, thresholds[0], thresholds[1])]
+
+    if thresholds[1] != -1 and value >= thresholds[1]:
+        status = 2
+        output = "%s (!!) Sessions" % value
+    elif thresholds[0] != -1 and value >= thresholds[0]:
+        status = 1
+        output = "%s (!) Sessions" % value
+    else:
+        output = "%s Sessions" % value
+
+    return (status, output, perf)
+
+check_info["cisco_ras_sessions"] = {
+     "check_function"           : check_cisco_ras_sessions,
+     "group"                    : "cisco_ras_sessions",
+     "inventory_function"       : inventory_cisco_ras_sessions,
+     "service_description"      : "Cisco Remote Access %s Sessions",
+     "default_levels_variable"  : "cisco_ras_sessions_levels",
+     "has_perfdata"             : 1,
+     "snmp_scan_function"       : lambda oid: oid(".1.3.6.1.2.1.1.1.0").lower().startswith("cisco adaptive security") \
+                                        or "vpn 3000 concentrator" in oid(".1.3.6.1.2.1.1.1.0").lower(),
+     "snmp_info"                : (
+         ".1.3.6.1.4.1.9.9.392.1.3", [
+            26, #crasIPSecNumSessions
+            28, #crasIPSecPeakConcurrentSessions
+            29, #crasL2LNumSessions
+            31, #crasL2LPeakConcurrentSessions
+            32, #crasLBNumSessions
+            34, #crasLBPeakConcurrentSessions
+            35, #crasSVCNumSessions
+            37, #crasSVCPeakConcurrentSessions
+            38, #crasWebvpnNumSessions
+            40, #crasWebvpnPeakConcurrentSessions
+     ]),
+}
