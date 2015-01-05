@@ -13,17 +13,10 @@ $def[1] = '';
 # Debugging Code
 # throw new Kohana_exception(print_r($this->DS,true));
 
-function build_sorter($key) {
-    return function ($a, $b) use ($key) {
-        if ($a == $b) {
-                return 0;
-        }
-        return ($a < $b) ? 1 : -1;
-    };
-}
-
 # sort by ACT (Last) Value. Highest Value goes into Background.
-usort($this->DS, build_sorter('ACT') );
+usort($this->DS, function($a, $b) {
+    return $b['ACT'] - $a['ACT'];
+});
 
 foreach ($this->DS as $KEY=>$VAL) {
 
