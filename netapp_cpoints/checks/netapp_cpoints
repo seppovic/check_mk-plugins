@@ -6,10 +6,10 @@
 # Contact: markus.weber@lfst.bayern.de                          #
 # License: GPL                                                  #
 # File: netapp_cpoints                                          #
-# Version: 1.0                                                  #
-# Revision: 20.08.2014                                          #
-# Description: Returns the number of Consistency Points per     #
-#  Minute taken by a netapp sorted by types.                    #
+# Version: 1.1                                                  #
+# Revision: 10.02.2015                                          #
+# Description: Returns the number and types of Consistency      #
+#  Points taken by a netapp per minute.                         #
 #################################################################
 
 
@@ -30,88 +30,50 @@
 #
 
 
-netapp_cpoints_default_levels = { "cpFromTimerOps" : (None, None), \
- "cpFromSnapshotOps" : (None, None), "cpFromLowWaterOps" : (None, None), \
- "cpFromHighWaterOps" : (None, None), "cpFromLogFullOps" : (None, None), \
- "cpFromCpOps" : (30, 50), "cpTotalOps" : (None, None), "cpFromFlushOps" : (None, None), \
- "cpFromSyncOps" : (None, None), "cpFromLowVbufOps" : (None, None), "cpFromCpDeferredOps" : (30, 50), \
- "cpFromLowDatavecsOps" : (None, None),}
-
+factory_settings["netapp_cpoints_default_levels"] = { 
+ "cpFromTimerOps" : (None, None), 
+ "cpFromSnapshotOps" : (None, None), 
+ "cpFromLowWaterOps" : (None, None), 
+ "cpFromHighWaterOps" : (None, None),
+ "cpFromLogFullOps" : (None, None), 
+ "cpFromCpOps" : (30, 50), 
+ "cpTotalOps" : (None, None), 
+ "cpFromFlushOps" : (None, None), 
+ "cpFromSyncOps" : (None, None), 
+ "cpFromLowVbufOps" : (None, None), 
+ "cpFromCpDeferredOps" : (30, 50), 
+ "cpFromLowDatavecsOps" : (None, None)
+}
 
 def inventory_netapp_cpoints(checkname, info):
-    return [ (None, "netapp_cpoints_default_levels") ]
+    return [ ( None, {} ) ]
 
-
-def check_netapp_cpoints_getCPperMinute(countername, this_time, this_val, allow_negative=False):
-    global g_counters
-
-    # First time we see this counter? Do not return
-    # any data!
-    if not countername in g_counters:
-        g_counters[countername] = (this_time, this_val, 0)
-        # Do not suppress this check on check_mk -nv
-        if opt_dont_submit:
-            return 1.0 
-        raise MKCounterWrapped(countername, 'Counter initialization')
-
-    last_time, last_val, last_rate = g_counters.get(countername)
-    timedif = (this_time - last_time ) / 60
-    if timedif <= 0: # do not update counter
-        # Reset counter to a (hopefully) reasonable value
-        g_counters[countername] = (this_time, this_val, 0)
-        # Do not suppress this check on check_mk -nv
-        if opt_dont_submit:
-            return 1.0
-        raise MKCounterWrapped(countername, 'No time difference')
-
-    valuedif = this_val - last_val
-    if valuedif < 0 and not allow_negative:
-        # Do not try to handle wrapper counters. We do not know
-        # wether they are 32 or 64 bit. It also could happen counter
-        # reset (reboot, etc.). Better is to leave this value undefined
-        # and wait for the next check interval.
-        # Do not suppress this check on check_mk -nv
-        if opt_dont_submit:
-            return 1.0
-        raise MKCounterWrapped(countername, 'Value overflow')
-
-    rate_per_min = valuedif / timedif
-    if timedif < 1: 
-        # if timedif < 1 minute return oldval for pnp
-        # and dont update counter
-        return last_rate 
-    else:
-        # update counter for next time
-        g_counters[countername] = (this_time, this_val, rate_per_min)
-
-    return rate_per_min
-    
 
 def check_netapp_cpoints(item, params, info):
     state = 0
     if len(info[0]) != 12:
-        return (3, "UNKNOWN - Invalid SNMP response")
+        return (1, "Invalid SNMP response")
 
     i = -1
     names = [ "cpTotalOps", "cpFromTimerOps", "cpFromSyncOps", "cpFromSnapshotOps", \
               "cpFromLogFullOps", "cpFromHighWaterOps", "cpFromFlushOps", "cpFromLowWaterOps",  \
               "cpFromLowVbufOps", "cpFromLowDatavecsOps", "cpFromCpOps", "cpFromCpDeferredOps", ]
     perfdata = []
-    this_time = int(time.time())
+    this_time = time.time()
     one_wrapped = False
     output   = 'Netapp Consistency Points - '
 
     for value in map(saveint, info[0]):
         i = i +1
-        one_wrapped = False
         warn, crit = params[names[i]]
-        try:
-            value_dif = check_netapp_cpoints_getCPperMinute("netapp.cpoints.%s" % names[i], this_time, value)
-        except MKCounterWrapped, e:
-            one_wrapped = e
-            perfdata.append((names[i], 0, warn, crit))
-            continue
+        countername = "openvpn_clients.%s.%s" % (item, names[i] )
+        value_dif = get_rate(countername, this_time, value)
 
+#        import pprint
+#        pprint.pprint(value)
+#        pprint.pprint(value_dif)
+
+        value_dif *= 60
         if warn is not None and crit is not None:
             if value_dif >= crit :
                 state = 2
@@ -132,6 +94,7 @@ check_info["netapp_cpoints"] = {
      "service_description"      : "NetApp ConsistencyPoints",
      "has_perfdata"             : 1,
      "snmp_scan_function"       : lambda oid: oid("1.3.6.1.2.1.1.1.0").startswith('NetApp Release'),
+     "default_levels_variable"  : "netapp_cpoints_default_levels",
      "snmp_info"                : (
          ".1.3.6.1.4.1.789.1.2.6", [
                 8,  # cpTotalOps

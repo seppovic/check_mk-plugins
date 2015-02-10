@@ -8,8 +8,8 @@ Consistency Point type.
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/netapp_cpoints/netapp_cpoints-1.0.mkp'
-* OMD[SITENAME]:~$ check_mk -P install netapp_cpoints-1.0.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/netapp_cpoints/netapp_cpoints-1.1.mkp'
+* OMD[SITENAME]:~$ check_mk -P install netapp_cpoints-1.1.mkp
 
 # Requirements
 * A NetApp.
@@ -18,4 +18,5 @@ Consistency Point type.
 * None so far.
 
 # History
+* 1.1 Use check_mk's new get_rate function.
 * 1.0 first release.
