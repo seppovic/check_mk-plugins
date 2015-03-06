@@ -1,0 +1,36 @@
+--- check_mk_agent.linux
++++ check_mk_agent.linux.btrfs
+@@ -135,7 +135,7 @@
+ echo '<<<df>>>'
+ # The exclusion list is getting a bit of a problem. -l should hide any remote FS but seems
+ # to be all but working.
+-excludefs="-x smbfs -x cifs -x iso9660 -x udf -x nfsv4 -x nfs -x mvfs -x zfs"
++excludefs="-x smbfs -x cifs -x iso9660 -x udf -x nfsv4 -x nfs -x mvfs -x zfs -x btrfs"
+ df -PTlk $excludefs | sed 1d
+ 
+ # df inodes information
+@@ -151,6 +151,23 @@
+        zfs get -Hp name,quota,used,avail,mountpoint,type
+     echo '[df]'
+     df -PTlk -t zfs | sed 1d
++fi
++
++if type btrfs >/dev/null 2>&1 ; then
++    echo '<<<df_btrfs>>>'
++    echo '[btrfs_df]'
++    sed -n '/ btrfs\? /s/\([^ ]*\) \([^ ]*\) .*/\1 \2/p' < /proc/mounts |
++        sed 's/\\040/ /g' |
++        while read DEV MP
++    do
++        echo $MP
++        btrfs fi df $MP
++        btrfs fi show $DEV
++    done
++    echo '[df]'
++    df -PTlk -t btrfs | sed 1d
++    unset i
++    
+ fi
+ 
+ # Check NFS mounts by accessing them with stat -f (System
+

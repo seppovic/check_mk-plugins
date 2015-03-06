@@ -1,0 +1,250 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+#################################################################
+#---------------------------------------------------------------#
+# Author: Markus Weber                                          #
+# Contact: markus.weber@lfst.bayern.de                          #
+# License: GPL                                                  #
+# File: df_btrfs                                                #
+# Version: 1.0                                                  #
+# Revision: 05.03.2015                                          #
+# Description: This check adds a test for misbalanced metadata  #
+# chunks to the df check of a btrfs filesystem.                 #
+# see also: http://marc.merlins.org/perso/btrfs/post_2014-05-   #
+# 04_Fixing-Btrfs-Filesystem-Full-Problems.html                 #
+#################################################################
+
+
+# Example Output
+#
+# <<<df_btrfs>>>
+# [btrfs_df]
+# /mnt/app
+# Data: total=5.01GiB, used=4.06GiB
+# System: total=4.00MiB, used=4.00KiB
+# Metadata: total=264.00MiB, used=24.07MiB
+# Label: none  uuid: eab3ab7e-fdb0-43f5-96e6-91cfecc7c814
+#         Total devices 1 FS bytes used 4.08GiB
+#         devid    1 size 39.99GiB used 5.27GiB path /dev/hdb1
+#
+# Btrfs v0.20+
+# /mnt/data
+# Data: total=80.01GiB, used=77.13GiB
+# System: total=4.00MiB, used=16.00KiB
+# Metadata: total=8.01GiB, used=6.31GiB
+# Label: none  uuid: 99bd9d80-bd9b-46c0-86e9-074ee328bbf9
+#         Total devices 1 FS bytes used 83.44GiB
+#         devid    1 size 500.00GiB used 88.02GiB path /dev/hdc1
+#
+# Btrfs v0.20+
+# /mnt/migration
+# Data: total=122.01GiB, used=83.05GiB
+# System: total=4.00MiB, used=20.00KiB
+# Metadata: total=1.01GiB, used=115.44MiB
+# Label: none  uuid: 509d7d1d-e353-4aa2-89cb-43bf7b9583ae
+#         Total devices 1 FS bytes used 83.16GiB
+#         devid    1 size 500.00GiB used 123.02GiB path /dev/hdd1
+#
+# Btrfs v0.20+
+# [df]
+# /dev/hdb1      btrfs    41928704  4282416  37396504      11% /mnt/app
+# /dev/hdc1      btrfs   524285952 87489864 435009764      17% /mnt/data
+# /dev/hdd1      btrfs   524285952 87198644 436144676      17% /mnt/migration
+#
+
+def strToMb(str):
+#
+# str =~ 5.01GiB
+# str =~ 4.00KiB
+# str =~ 24.07MiB
+# str =~ 34GB
+#
+    import re
+    m = re.search('(?P<val>.*)(?P<unit>[KMGT])i?B$', str)
+    if m:
+        val = float(m.group('val'))
+        if m.group('unit') == 'K':
+            MB = val / 1024.0
+        if m.group('unit') == 'M':
+            MB = val
+        if m.group('unit') == 'G':
+            MB = val * 1024
+        if m.group('unit') == 'T':
+            MB = val * 1024 * 1024
+    return MB
+
+def parse_df_btrfs(info):
+#
+# for now we expect 2 sections, [btrfs_df] and [df]
+# [df] does the same as zfsget, it fills parsed_df with total, available and used fields with MB values
+# [btrfs_df] fills parsed_df with Btrfs specific values like Metadata, Data, System and allocated blocks on devices
+# [btrfs_usage] is planed for new btrfs-progs tools "btrfs fi usage /mnt"
+#
+    run_df = False
+    run_btrfs_df = True
+    run_btrfs_usage = False
+    df_parsed = {}
+    mountpoint = ''
+
+    for line in info:
+        if line == ['[btrfs_df]']:
+            run_df = False
+            run_btrfs_df = True
+            run_btrfs_usage = False
+            continue
+        if line == ['[df]']:
+            run_df = True
+            run_btrfs_df = False
+            run_btrfs_usage = False
+            continue
+        if line == ['[btrfs_usage]']:
+            run_df = False
+            run_btrfs_df = False
+            run_btrfs_usage = True
+            continue
+
+        if run_btrfs_df:
+            if line[0].startswith('/'):
+                mountpoint = " ".join(line).replace('\\', '/')
+                continue
+
+            datatype = ''
+            total = ''
+            used = ''
+            if line[0].startswith('Metadata') or line[0].startswith('Data') or line[0].startswith('System'):
+                line = [x.rstrip(':,') for x in line]
+                if len(line) == 4:
+                    datatype= ','.join((line[0], line[1]))
+                else:
+                    datatype = line[0]
+                total = (line[-2].split('='))[1]
+                used = (line[-1].split('='))[1]
+
+                if mountpoint not in df_parsed:
+                    df_parsed[mountpoint]={}
+                df_parsed[mountpoint][datatype] = { 'total' :  strToMb(total), 'used': strToMb(used) }
+            # a btrfs can have more devices.
+            if line[0].startswith('devid'):
+                total = line[3]
+                used = line[5]
+                dev = line[-1]
+                if 'dev' not in df_parsed[mountpoint]:
+                    df_parsed[mountpoint]["dev"] = {}
+                df_parsed[mountpoint]["dev"][dev] = { 'total' : strToMb(total), 'allocated': strToMb(used) }
+
+        if run_df:
+            # device, percent and mountpoint are not used from df output,
+            # as they are already taken from btrfs output
+            if len(line) == 6:
+                device, kbytes, used, avail, percent, mountpoint = line
+            else:
+                device, fstype, kbytes, used, avail, percent, mountpoint = line
+            
+            if mountpoint.startswith("/"):
+                total = int(kbytes) / 1024.0
+                if mountpoint not in df_parsed:
+                    df_parsed[mountpoint]={}
+                df_parsed[mountpoint]["total"] = total
+                df_parsed[mountpoint]["used"] = int(used) / 1024.0
+                df_parsed[mountpoint]["available"] = total - df_parsed[mountpoint]["used"]
+                df_parsed[mountpoint]["fstype"] = fstype
+
+        # ignore all lines not fetched above
+
+    # --- this is stolen from zfsget, not sure if it is necessary ---
+    #
+    # Now remove duplicate entries for the root filesystem, such
+    # as /dev/ or /lib/libc.so.1. We do this if size, used and
+    # avail is equal. I hope that it will not happen too often
+    # that this is per chance the case for different passed-through
+    # filesystems
+    root_entry = df_parsed.get("/")
+    if root_entry:
+        t_u_a = (root_entry["total"], root_entry["used"], root_entry["available"])
+        drop = []
+        for mountpoint, entry in df_parsed.items():
+            if mountpoint != "/" and \
+                t_u_a == (entry["total"], entry["used"], entry["available"]):
+                drop.append(mountpoint)
+        for mp in drop:
+            del df_parsed[mp]
+
+    return df_parsed
+
+
+def inventory_btrfs(info):
+    mplist = []
+    parsed = parse_df_btrfs(info)
+    for mountpoint, properties in parsed.items():
+        if properties['fstype'] not in inventory_df_exclude_fs and mountpoint not in inventory_df_exclude_mountpoints:
+            mplist.append(mountpoint)
+    return df_inventory(mplist)
+
+
+def check_btrfs(item, params, info):
+    fslist = []
+    btrfs_ret = [ 0 ]
+    output_append = ''
+
+    parsed = parse_df_btrfs(info)
+
+    for mountpoint, properties in parsed.items():
+        # --- logic from df ---
+        if "patterns" in params or item == mountpoint:
+            used_mb = properties["used"]
+            avail_mb = properties["available"]
+            total_mb = used_mb + avail_mb
+            fslist.append((mountpoint, total_mb, avail_mb))
+
+            # here we do the aktual logic, if a device is fully allocated
+            # and Metadata is more than 70% full we raise an alarm
+            # exceptions are Metadata where space that is smaller then 1 MB
+            # e.g. raid, DUP...
+            metadatausage = 0
+            utilised = 0            
+            for key, val in properties.items():
+                # check Metadata usage
+                if key.startswith('Metadata'):
+                    if val['used'] < 1:
+                        per = 0.0
+                    else:
+                        per = float(val['used'] / val['total'])
+
+                    if per > 0.75:
+                        metadatausage = 2
+                    elif per > 0.73:
+                        metadatausage = 1
+                # check space allocation of filesystem
+                if key == 'dev':
+                    for dev, data in val.items():
+                        if data['total'] == data['allocated']:
+                            utilised = 1
+
+            if utilised == 1 and metadatausage == 2:
+                btrfs_ret.append(2)
+                output_append += ", Btrfs has allocated all of the device space and Metadata are close to full (!!) you should start a balance run to avoid - No space left on device - errors"
+            elif utilised == 1 and metadatausage == 1:
+                btrfs_ret.append(1)
+                output_append += ", Btrfs has allocated almost all of the device space and Metadata are close to full (!) you should start a balance run to avoid - No space left on device - errors"
+
+    # out of loop, we finally check the filesystem with function from df.include
+    # and merge with our btrfs stats
+    (df_ret, output, perf) = df_check_filesystem_list(item, params, fslist)
+    if max(btrfs_ret) > df_ret:
+        ret = max(btrfs_ret)
+    else:
+        ret = df_ret
+    output += output_append
+
+    return ret, output, perf
+
+
+check_info['df_btrfs'] = {
+    "check_function"          : check_btrfs,
+    "inventory_function"      : inventory_btrfs,
+    "service_description"     : "Filesystem %s",
+    "has_perfdata"            : True,
+    "group"                   : "filesystem",
+    "default_levels_variable" : "filesystem_default_levels",
+    "includes"                : [ "df.include" ],
+}
