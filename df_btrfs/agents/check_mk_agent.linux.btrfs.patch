@@ -1,5 +1,5 @@
---- check_mk_agent.linux
-+++ check_mk_agent.linux.btrfs
+--- usr/bin/check_mk_agent	2015-03-09 10:25:39.000000000 +0100
++++ usr/bin/check_mk_agent	2015-03-09 10:30:56.000000000 +0100
 @@ -135,7 +135,7 @@
  echo '<<<df>>>'
  # The exclusion list is getting a bit of a problem. -l should hide any remote FS but seems
@@ -9,12 +9,10 @@
  df -PTlk $excludefs | sed 1d
  
  # df inodes information
-@@ -151,6 +151,23 @@
-        zfs get -Hp name,quota,used,avail,mountpoint,type
-     echo '[df]'
+@@ -153,6 +153,23 @@
      df -PTlk -t zfs | sed 1d
-+fi
-+
+ fi
+ 
 +if type btrfs >/dev/null 2>&1 ; then
 +    echo '<<<df_btrfs>>>'
 +    echo '[btrfs_df]'
@@ -30,7 +28,8 @@
 +    df -PTlk -t btrfs | sed 1d
 +    unset i
 +    
- fi
- 
++ fi
++ 
  # Check NFS mounts by accessing them with stat -f (System
-
+ # call statfs()). If this lasts more then 2 seconds we
+ # consider it as hanging. We need waitmax.

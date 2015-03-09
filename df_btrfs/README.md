@@ -27,7 +27,7 @@ If at least one device in the **btrfs fi show** output is fully utilised like th
    -> ...
 
  is used, a warn respectively critical state is raised. Threshold is taken from btrfs wiki, 
- it can't be configured.
+ it can't be configured. See this link for more details:
 
  **https://btrfs.wiki.kernel.org/index.php/Problem_FAQ#I_get_.22No_space_left_on_device.22_errors.2C_but_df_says_I.27ve_got_lots_of_space**
 
