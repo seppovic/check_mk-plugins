@@ -46,5 +46,6 @@ If at least one device in the **btrfs fi show** output is fully utilised like th
 # Known issues
 
 # History
+* 1.0.1 Fixed Bug in conversion function
 * 1.0   first release
 

@@ -71,6 +71,8 @@ def strToMb(str):
             MB = val * 1024
         if m.group('unit') == 'T':
             MB = val * 1024 * 1024
+    else:
+        MB = 0.00
     return MB
 
 def parse_df_btrfs(info):
