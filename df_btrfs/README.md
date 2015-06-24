@@ -34,8 +34,8 @@ If at least one device in the **btrfs fi show** output is fully utilised like th
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/df_btrfs/df_btrfs-1.0.mkp'
-* OMD[SITENAME]:~$ check_mk -P install df_btrfs-1.0.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/df_btrfs/df_btrfs-1.0.2.mkp'
+* OMD[SITENAME]:~$ check_mk -P install df_btrfs-1.0.2.mkp
 
 # Requirements
 * A check_mk_agent patched with this patch: https://github.com/seppovic/check_mk-plugins/raw/master/df_btrfs/agents/check_mk_agent.linux.patch
@@ -46,6 +46,7 @@ If at least one device in the **btrfs fi show** output is fully utilised like th
 # Known issues
 
 # History
+* 1.0.2 Fixed Bug initialised variable to avoid Errors and fixed root reserve calculation
 * 1.0.1 Fixed Bug in conversion function
 * 1.0   first release
 

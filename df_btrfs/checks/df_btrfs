@@ -6,8 +6,8 @@
 # Contact: markus.weber@lfst.bayern.de                          #
 # License: GPL                                                  #
 # File: df_btrfs                                                #
-# Version: 1.0                                                  #
-# Revision: 05.03.2015                                          #
+# Version: 1.0.2                                                #
+# Revision: 24.06.2015                                          #
 # Description: This check adds a test for misbalanced metadata  #
 # chunks to the df check of a btrfs filesystem.                 #
 # see also: http://marc.merlins.org/perso/btrfs/post_2014-05-   #
@@ -62,6 +62,7 @@ def strToMb(str):
     import re
     m = re.search('(?P<val>.*)(?P<unit>[KMGT])i?B$', str)
     if m:
+        MB = 0.00
         val = float(m.group('val'))
         if m.group('unit') == 'K':
             MB = val / 1024.0
@@ -71,9 +72,7 @@ def strToMb(str):
             MB = val * 1024
         if m.group('unit') == 'T':
             MB = val * 1024 * 1024
-    else:
-        MB = 0.00
-    return MB
+        return MB
 
 def parse_df_btrfs(info):
 #
@@ -139,16 +138,17 @@ def parse_df_btrfs(info):
             # as they are already taken from btrfs output
             if len(line) == 6:
                 device, kbytes, used, avail, percent, mountpoint = line
+                fstype = None
             else:
                 device, fstype, kbytes, used, avail, percent, mountpoint = line
             
             if mountpoint.startswith("/"):
-                total = int(kbytes) / 1024.0
+                size = int(kbytes) / 1024.0
                 if mountpoint not in df_parsed:
                     df_parsed[mountpoint]={}
-                df_parsed[mountpoint]["total"] = total
+                df_parsed[mountpoint]["size"] = size
                 df_parsed[mountpoint]["used"] = int(used) / 1024.0
-                df_parsed[mountpoint]["available"] = total - df_parsed[mountpoint]["used"]
+                df_parsed[mountpoint]["available"] = int(avail) / 1024.0
                 df_parsed[mountpoint]["fstype"] = fstype
 
         # ignore all lines not fetched above
@@ -162,11 +162,11 @@ def parse_df_btrfs(info):
     # filesystems
     root_entry = df_parsed.get("/")
     if root_entry:
-        t_u_a = (root_entry["total"], root_entry["used"], root_entry["available"])
+        t_u_a = (root_entry["size"], root_entry["used"], root_entry["available"])
         drop = []
         for mountpoint, entry in df_parsed.items():
             if mountpoint != "/" and \
-                t_u_a == (entry["total"], entry["used"], entry["available"]):
+                t_u_a == (entry["size"], entry["used"], entry["available"]):
                 drop.append(mountpoint)
         for mp in drop:
             del df_parsed[mp]
@@ -195,8 +195,9 @@ def check_btrfs(item, params, info):
         if "patterns" in params or item == mountpoint:
             used_mb = properties["used"]
             avail_mb = properties["available"]
-            total_mb = used_mb + avail_mb
-            fslist.append((mountpoint, total_mb, avail_mb))
+            size_mb = properties["size"]
+            reserved_mb = size_mb - avail_mb - used_mb # reserved for root
+            fslist.append((mountpoint, size_mb, avail_mb, reserved_mb))
 
             # here we do the aktual logic, if a device is fully allocated
             # and Metadata is more than 70% full we raise an alarm
