@@ -6,10 +6,10 @@
 # Contact: markus.weber@lfst.bayern.de                          #
 # License: GPL                                                  #
 # File: netapp_cpoints                                          #
-# Version: 1.1                                                  #
-# Revision: 10.02.2015                                          #
-# Description: Returns the number and types of Consistency      #
-#  Points taken by a netapp per minute.                         #
+# Version: 1.1.1                                                #
+# Revision: 24.06.2015                                          #
+# Description: Returns the number of Consistency Points         #
+#  taken by a netapp sorted by types.                           #
 #################################################################
 
 
@@ -31,18 +31,18 @@
 
 
 factory_settings["netapp_cpoints_default_levels"] = { 
- "cpFromTimerOps" : (None, None), 
- "cpFromSnapshotOps" : (None, None), 
- "cpFromLowWaterOps" : (None, None), 
- "cpFromHighWaterOps" : (None, None),
- "cpFromLogFullOps" : (None, None), 
+ "cpFromTimerOps" : (-1, -1), 
+ "cpFromSnapshotOps" : (-1, -1), 
+ "cpFromLowWaterOps" : (-1, -1), 
+ "cpFromHighWaterOps" : (-1, -1),
+ "cpFromLogFullOps" : (-1, -1), 
  "cpFromCpOps" : (30, 50), 
- "cpTotalOps" : (None, None), 
- "cpFromFlushOps" : (None, None), 
- "cpFromSyncOps" : (None, None), 
- "cpFromLowVbufOps" : (None, None), 
+ "cpTotalOps" : (-1, -1), 
+ "cpFromFlushOps" : (-1, -1), 
+ "cpFromSyncOps" : (-1, -1), 
+ "cpFromLowVbufOps" : (-1, -1), 
  "cpFromCpDeferredOps" : (30, 50), 
- "cpFromLowDatavecsOps" : (None, None)
+ "cpFromLowDatavecsOps" : (-1, -1)
 }
 
 def inventory_netapp_cpoints(checkname, info):
@@ -69,22 +69,18 @@ def check_netapp_cpoints(item, params, info):
         countername = "openvpn_clients.%s.%s" % (item, names[i] )
         value_dif = get_rate(countername, this_time, value)
 
-#        import pprint
-#        pprint.pprint(value)
-#        pprint.pprint(value_dif)
-
         value_dif *= 60
-        if warn is not None and crit is not None:
-            if value_dif >= crit :
+        if warn != -1 and crit != -1 :
+            if crit != -1 and value_dif >= crit :
                 state = 2
                 output += "%s (!!), " % names[i]
-            elif value_dif >= warn:
+            elif warn != -1 and value_dif >= warn:
                 if state < 1:
                     state = 1
                 output += "%s (!), " % names[i]
         perfdata.append((names[i], value_dif, warn, crit))
 
-    return (state, "%s - %s" % (nagios_state_names[state], output), perfdata)
+    return (state, output, perfdata)
 
 
 check_info["netapp_cpoints"] = {
@@ -93,7 +89,7 @@ check_info["netapp_cpoints"] = {
      "inventory_function"       : inventory_netapp_cpoints,
      "service_description"      : "NetApp ConsistencyPoints",
      "has_perfdata"             : 1,
-     "snmp_scan_function"       : lambda oid: oid("1.3.6.1.2.1.1.1.0").startswith('NetApp Release'),
+     "snmp_scan_function"       : lambda oid: oid(".1.3.6.1.2.1.1.1.0").startswith('NetApp Release'),
      "default_levels_variable"  : "netapp_cpoints_default_levels",
      "snmp_info"                : (
          ".1.3.6.1.4.1.789.1.2.6", [

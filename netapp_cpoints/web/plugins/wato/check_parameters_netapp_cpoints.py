@@ -4,7 +4,7 @@ subgroup_storage = _("Storage, Filesystems and Files")
 register_check_parameters(
      subgroup_storage,
     "netapp_cpoints",
-    _("Netapp Consistency Points"),
+    _("Netapp Consitency Points"),
     Dictionary(
           help = _("Here you can override the default levels for the Netapp Consistency Points check. The levels "
                    "are applied on the number of Consistency Points made since last checktime."),
@@ -13,8 +13,8 @@ register_check_parameters(
                 Tuple(
                     title = _("Total"),
                     elements = [
-                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = None),
-			Integer(title = _("Critical if more than"), unit = _("CP"), default_value = None)
+                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = -1),
+            Integer(title = _("Critical if more than"), unit = _("CP"), default_value = -1)
                     ]
                 )
              ),
@@ -22,8 +22,8 @@ register_check_parameters(
                 Tuple(
                     title = _("From Timer"),
                     elements = [
-                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = None),
-			Integer(title = _("Critical if more than"), unit = _("CP"), default_value = None)
+                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = -1),
+            Integer(title = _("Critical if more than"), unit = _("CP"), default_value = -1)
                     ]
                 )
              ),
@@ -31,8 +31,8 @@ register_check_parameters(
                 Tuple(
                     title = _("From Sync"),
                     elements = [
-                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = None),
-			Integer(title = _("Critical if more than"), unit = _("CP"), default_value = None)
+                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = -1),
+            Integer(title = _("Critical if more than"), unit = _("CP"), default_value = -1)
                     ]
                 )
              ),
@@ -40,8 +40,8 @@ register_check_parameters(
                 Tuple(
                     title = _("From Snapshot"),
                     elements = [
-                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = None),
-			Integer(title = _("Critical if more than"), unit = _("CP"), default_value = None)
+                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = -1),
+            Integer(title = _("Critical if more than"), unit = _("CP"), default_value = -1)
                     ]
                 )
              ),
@@ -49,8 +49,8 @@ register_check_parameters(
                 Tuple(
                     title = _("From Log Full"),
                     elements = [
-                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = None),
-			Integer(title = _("Critical if more than"), unit = _("CP"), default_value = None)
+                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = -1),
+            Integer(title = _("Critical if more than"), unit = _("CP"), default_value = -1)
                     ]
                 )
              ),
@@ -58,8 +58,8 @@ register_check_parameters(
                 Tuple(
                     title = _("From High Water"),
                     elements = [
-                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = None),
-			Integer(title = _("Critical if more than"), unit = _("CP"), default_value = None)
+                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = -1),
+            Integer(title = _("Critical if more than"), unit = _("CP"), default_value = -1)
                     ]
                 )
              ),
@@ -67,8 +67,8 @@ register_check_parameters(
                 Tuple(
                     title = _("From Flush"),
                     elements = [
-                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = None),
-			Integer(title = _("Critical if more than"), unit = _("CP"), default_value = None)
+                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = -1),
+            Integer(title = _("Critical if more than"), unit = _("CP"), default_value = -1)
                     ]
                 )
              ),
@@ -76,8 +76,8 @@ register_check_parameters(
                 Tuple(
                     title = _("From Low Water"),
                     elements = [
-                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = None),
-			Integer(title = _("Critical if more than"), unit = _("CP"), default_value = None)
+                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = -1),
+            Integer(title = _("Critical if more than"), unit = _("CP"), default_value = -1)
                     ]
                 )
              ),
@@ -85,8 +85,8 @@ register_check_parameters(
                 Tuple(
                     title = _("From Low Vbuf"),
                     elements = [
-                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = None),
-			Integer(title = _("Critical if more than"), unit = _("CP"), default_value = None)
+                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = -1),
+            Integer(title = _("Critical if more than"), unit = _("CP"), default_value = -1)
                     ]
                 )
              ),
@@ -94,8 +94,8 @@ register_check_parameters(
                 Tuple(
                     title = _("From Low Datavecs"),
                     elements = [
-                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = None),
-			Integer(title = _("Critical if more than"), unit = _("CP"), default_value = None)
+                        Integer(title = _("Warning if more than"), unit = _("CP"), default_value = -1),
+            Integer(title = _("Critical if more than"), unit = _("CP"), default_value = -1)
                     ]
                 )
              ),
@@ -104,7 +104,7 @@ register_check_parameters(
                     title = _("Back to Back"),
                     elements = [
                         Integer(title = _("Warning if more than"), unit = _("CP"), default_value = 30),
-			Integer(title = _("Critical if more than"), unit = _("CP"), default_value = 50)
+            Integer(title = _("Critical if more than"), unit = _("CP"), default_value = 50)
                     ]
                 )
              ),
@@ -113,11 +113,12 @@ register_check_parameters(
                     title = _("Deferred Back to Back"),
                     elements = [
                         Integer(title = _("Warning if more than"), unit = _("CP"), default_value = 30),
-			Integer(title = _("Critical if more than"), unit = _("CP"), default_value = 50)
+            Integer(title = _("Critical if more than"), unit = _("CP"), default_value = 50)
                     ]
                 )
              ),
           ],
     ),
-    None, None
+    None,
+    match_type = "dict",
 )

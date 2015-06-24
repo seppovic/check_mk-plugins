@@ -1,6 +1,6 @@
 {'author': 'Markus Weber',
  'description': 'Returns the number and types of Consistency Points taken by a netapp per minute.',
- 'download_url': 'https://github.com/seppovic/check_mk-plugins/raw/master/netapp_cpoints/netapp_cpoints-1.1.mkp',
+ 'download_url': 'https://github.com/seppovic/check_mk-plugins/raw/master/netapp_cpoints/netapp_cpoints-1.1.1.mkp',
  'files': {'agents': [],
            'checkman': ['netapp_cpoints'],
            'checks': ['netapp_cpoints'],
@@ -11,7 +11,7 @@
            'web': ['plugins/wato/check_parameters_netapp_cpoints.py']},
  'name': 'netapp_cpoints',
  'title': 'netapp_cpoints',
- 'version': '1.1',
+ 'version': '1.1.1',
  'version.min_required': '1.2.5i4',
- 'version.packaged': '1.2.6b4'}
+ 'version.packaged': '1.2.7i1p2'}
 
