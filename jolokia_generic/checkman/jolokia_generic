@@ -9,7 +9,7 @@ description:
  It is possible to monitor nummeric, either as rate or as gauge value and Strings
  matching a given List of Parameters.
 
- To use this plugin, Jolokia and the agent plugin need to be deployed
+ To use this plugin, Jolokia and the agent plugin needs to be deployed
  on the monitored server in each application container.
 
  The check can alert if the values fall or climb to configurable {WARN}/{CRIT} thresholds

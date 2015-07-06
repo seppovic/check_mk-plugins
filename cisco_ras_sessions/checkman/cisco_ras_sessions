@@ -1,5 +1,6 @@
 title: Remote Access Sessions on Cisco Devices from ciscoRemoteAccessMonitorMIB
 agents: snmp
+catalog: hw/network/cisco
 author: Markus Weber <markus.weber@lfst.bayern.de>
 license: GPL
 distribution: check_mk

@@ -1,5 +1,6 @@
 title: monitor what type of Consistency Points are taken by a NetApp.
 agents: snmp
+catalog: hw/storagehw/netapp
 author: Markus Weber <markus.weber@lfst.bayern.de>
 license: GPL
 distribution: check_mk
