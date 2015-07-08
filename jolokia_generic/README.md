@@ -6,8 +6,8 @@ jolokia.cfg in agents/cfg_examples/ folder for an example.
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/jolokia_generic/jolokia_generic-2.2.1.mkp'
-* OMD[SITENAME]:~$ check_mk -P install jolokia_generic-2.2.1.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/jolokia_generic/jolokia_generic-2.2.2.mkp'
+* OMD[SITENAME]:~$ check_mk -P install jolokia_generic-2.2.2.mkp
 
 # Requirements
 * Application server with [jolokia](http://jolokia.org/) deployed.
@@ -18,6 +18,7 @@ jolokia.cfg in agents/cfg_examples/ folder for an example.
 # Known issues
 
 # History
+* 2.2.2 Fixed Bug in WATO configuration and brought agent in sync with git.mathias-kettner.de
 * 2.2.1 Fixed Display of pnp-graph, sort Attributes by value to keep the highest in the background
 * 2.2   Added functionality to specify thresholds for each value of a service
 * 2.1.1 Fixed Case where we don't get an application field back from the agent (e.g. Some Applications start their own MBean Server)

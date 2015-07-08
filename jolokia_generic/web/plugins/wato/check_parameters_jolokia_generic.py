@@ -15,7 +15,7 @@ register_check_parameters(
                             Float( title = _("Warning if below"), default_value = -1.0 ),
                             Float( title = _("Critical if below"), default_value = -1.0 ),
                             Float( title = _("Warning if above"), default_value = 0.0 ),
-                            Float( title = _("Critical if above"), default_value = 0.0 ),
+                            Float( title = _("Critical if below"), default_value = 0.0 ),
                             TextAscii( 
                                    title = _("Name of the MBean/Attribute (optional)"), 
                                    help = _("This might be helpful if you group some values together and want the Threshold only on a particular value.") 
@@ -41,5 +41,5 @@ register_check_parameters(
         title = _("Item Name"),
         help = _("Name of the Service description without the JVM prefix")
     ),
-    "first"
+    match_type = "dict",
 )

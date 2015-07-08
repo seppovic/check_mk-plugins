@@ -1,15 +1,20 @@
 #!/usr/bin/env python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
 
-import urllib2, sys, os, socket
+import urllib2, sys, os, socket, pprint
 
 opt_debug = '--debug' in sys.argv
 
 def fetch_var(server, port, path, suburi, itemspec):
     url = "http://%s:%d/%s/%s" % (server, port, suburi, path)
+    if opt_debug:
+        sys.stderr.write("DEBUG: Fetching: %s\n" % url)
     try:
         json = urllib2.urlopen(url).read()
+        if opt_debug:
+            sys.stderr.write("DEBUG: Result: %s\n\n" % json)
     except Exception, e:
-        sys.stderr.write("ERROR: %s" % e)
+        sys.stderr.write("ERROR: %s\n" % e)
         return []
 
 
@@ -118,6 +123,7 @@ def query_instance(inst):
        return
 
     sys.stdout.write('<<<jolokia_metrics>>>\n')
+    # Fetch the general information first
     for path, title, itemspec in global_vars + specific_vars.get(product, []):
         try:
             values = fetch_var(inst["server"], inst["port"], "read/" + path, inst["suburi"], itemspec)
@@ -223,17 +229,19 @@ instance = None
 vars = []
 
 global_vars = [
-  ( "java.lang:type=Memory/NonHeapMemoryUsage/used",      "NonHeapMemoryUsage",      [] ),
-  ( "java.lang:type=Memory/NonHeapMemoryUsage/max",       "NonHeapMemoryMax",        [] ),
-  ( "java.lang:type=Memory/HeapMemoryUsage/used",         "HeapMemoryUsage",         [] ),
-  ( "java.lang:type=Memory/HeapMemoryUsage/max",          "HeapMemoryMax",           [] ),
-  ( "java.lang:type=Threading/ThreadCount",               "ThreadCount",             [] ),
-  ( "java.lang:type=Threading/DaemonThreadCount",         "DeamonThreadCount",       [] ),
-  ( "java.lang:type=Threading/PeakThreadCount",           "PeakThreadCount",         [] ),
-  ( "java.lang:type=Threading/TotalStartedThreadCount",   "TotalStartedThreadCount", [] ),
-  ( "java.lang:type=Runtime/Uptime",                      "Uptime",                  [] ),
-  ( "java.lang:type=GarbageCollector,name=*/CollectionCount",             "",        [] ),
-  ( "java.lang:type=GarbageCollector,name=*/CollectionTime",             "",         [] ),
+  ( "java.lang:type=Memory/NonHeapMemoryUsage/used",                "NonHeapMemoryUsage",       [] ),
+  ( "java.lang:type=Memory/NonHeapMemoryUsage/max",                 "NonHeapMemoryMax",         [] ),
+  ( "java.lang:type=Memory/HeapMemoryUsage/used",                   "HeapMemoryUsage",          [] ),
+  ( "java.lang:type=Memory/HeapMemoryUsage/max",                    "HeapMemoryMax",            [] ),
+  ( "java.lang:type=Threading/ThreadCount",                         "ThreadCount",              [] ),
+  ( "java.lang:type=Threading/DaemonThreadCount",                   "DeamonThreadCount",        [] ),
+  ( "java.lang:type=Threading/PeakThreadCount",                     "PeakThreadCount",          [] ),
+  ( "java.lang:type=Threading/TotalStartedThreadCount",             "TotalStartedThreadCount",  [] ),
+  ( "java.lang:type=Runtime/Uptime",                                "Uptime",                   [] ),
+  ( "java.lang:type=GarbageCollector,name=*/CollectionCount",       "",                         [] ),
+  ( "java.lang:type=GarbageCollector,name=*/CollectionTime",        "",                         [] ),
+  ( "java.lang:name=CMS%20Perm%20Gen,type=MemoryPool/Usage/used",   "PermGenUsage",             [] ),
+  ( "java.lang:name=CMS%20Perm%20Gen,type=MemoryPool/Usage/max",    "PermGenMax",               [] ),
 ]
 
 
