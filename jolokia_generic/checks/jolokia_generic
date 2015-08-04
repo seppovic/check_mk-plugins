@@ -6,8 +6,8 @@
 # Contact: markus.weber@lfst.bayern.de                          #
 # License: GPL                                                  #
 # File: jolokia_generic                                         #
-# Version: 2.2                                                  #
-# Revision: 11.11.2014                                          #
+# Version: 2.2.2                                                #
+# Revision: 08.07.2015                                          #
 # Description: This Check allows to monitor any given           #
 #  MBean/Attribute of an Application server.                    #
 #################################################################

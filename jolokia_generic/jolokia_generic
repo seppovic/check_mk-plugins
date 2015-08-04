@@ -1,6 +1,6 @@
 {'author': 'Markus Weber',
  'description': 'This plugin extends the original jolokia_metrics distributed with check_mk. It adds the functionality to include userdefined MBeans/Attributes to the monitoring.',
- 'download_url': 'https://github.com/seppovic/check_mk-plugins/raw/master/jolokia_generic/jolokia_generic-2.2.2.mkp',
+ 'download_url': 'https://github.com/seppovic/check_mk-plugins/tree/master/jolokia_generic',
  'files': {'agents': [],
            'checkman': ['jolokia_generic'],
            'checks': ['jolokia_generic'],
