@@ -1,6 +1,6 @@
 {'author': 'Markus Weber',
- 'description': 'This check adds a test for misbalanced metadata chunks to the df check of a btrfs filesystem.',
- 'download_url': 'https://github.com/seppovic/check_mk-plugins/raw/master/df_btrfs/df_btrfs-1.0.2.mkp',
+ 'description': 'This check adds a test for misbalanced metadata chunks to the df check of a btrfs filesystem. Please refer to the github url for further information. Be aware that you have to patch the check_mk_agent in order to make this work!',
+ 'download_url': 'https://github.com/seppovic/check_mk-plugins/tree/master/df_btrfs',
  'files': {'agents': [],
            'checkman': ['df_btrfs'],
            'checks': ['df_btrfs'],
@@ -10,7 +10,8 @@
            'pnp-templates': [],
            'web': ['plugins/perfometer/df_btrfs.py']},
  'name': 'df_btrfs',
+ 'num_files': 3,
  'title': 'df_btfs',
  'version': '1.0.2',
  'version.min_required': '1.2.7i1',
- 'version.packaged': '1.2.7i1p2'}
+ 'version.packaged': '1.2.7i2'}
