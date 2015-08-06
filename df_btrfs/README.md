@@ -38,7 +38,8 @@ If at least one device in the **btrfs fi show** output is fully utilised like th
 * OMD[SITENAME]:~$ check_mk -P install df_btrfs-1.0.2.mkp
 
 # Requirements
-* A check_mk_agent patched with this patch: https://github.com/seppovic/check_mk-plugins/raw/master/df_btrfs/agents/check_mk_agent.linux.patch
+* A check_mk_agent patched with this patch:
+ https://raw.githubusercontent.com/seppovic/check_mk-plugins/master/df_btrfs/agents/check_mk_agent.linux.btrfs.patch
 * A btrfs filesystem, obviously.
 
 # TODO
