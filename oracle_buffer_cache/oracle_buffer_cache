@@ -12,6 +12,6 @@
  'name': 'oracle_buffer_cache',
  'num_files': 3,
  'title': 'oracle_buffer_cache',
- 'version': '1.0',
+ 'version': '1.0.1',
  'version.min_required': '1.2.4',
  'version.packaged': '1.2.7i2'}
