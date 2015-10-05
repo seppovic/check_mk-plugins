@@ -1,0 +1,61 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+#################################################################
+#---------------------------------------------------------------#
+# Author: Markus Weber                                          #
+# Contact: markus.weber@lfst.bayern.de                          #
+# License: GPL                                                  #
+# File: oracle_buffer_cache                                     #
+# Version: 1.0                                                  #
+# Revision: 05.10.2015                                          #
+# Description: Monitors the buffer cache hit ratio of oracle    #
+#  databases                                                    #
+#################################################################
+
+# Instance|'physical reads cache'|'consistent gets from cache'|'db block gets from cache'
+#<<<oracle_buffer_cache:sep(124)>>>
+#Instance1|377971|18717516|5460761
+#
+
+
+# no default thresholds
+factory_settings["oracle_buffer_cache_defaults"] = {
+    "levels" : (0.0, 0.0)
+}
+
+
+def inventory_oracle_buffer_cache(info):
+    return [ (line[0], {}) for line in info if len(line) == 4 ]
+
+def check_oracle_buffer_cache(item, params, info):
+    for line in info:
+        if line[0] == item:
+            warn, crit = params["levels"]
+            ratio = ( 1 - ( savefloat(line[1]) / ( savefloat(line[2]) + savefloat(line[3]) ) ) ) * 100 
+
+            perfdata = [("CacheHitRatio", ratio, warn, crit)]
+
+            if ratio <= crit:
+                infotext = "Cache Hit Ratio is %.2f percent (!!) (levels at %d/%d)" % (ratio, warn, crit)
+                return (2, infotext, perfdata)
+            if ratio <= warn:
+                infotext = "Cache Hit Ratio is %.2f percent (!) (levels at %d/%d)" % (ratio, warn, crit)
+                return (1, infotext, perfdata)
+            else:           
+                infotext = "Cache Hit Ratio is %.2f percent." % (ratio)
+                return (0, infotext, perfdata)
+
+    # In case of missing information we assume that the login into
+    # the database has failed and we simply skip this check. It won't
+    # switch to UNKNOWN, but will get stale.
+    raise MKCounterWrapped("Login into database failed")
+
+
+check_info["oracle_buffer_cache"] = {
+    'default_levels_variable': "oracle_buffer_cache_defaults",
+    'check_function':          check_oracle_buffer_cache,
+    'inventory_function':      inventory_oracle_buffer_cache,
+    'service_description':     'ORA %s Buffer Cache',
+    'has_perfdata':            True,
+    'group':                   'oracle_buffer_cache',
+}

@@ -1,0 +1,34 @@
+--- agents/plugins/mk_oracle
++++ agents/plugins/mk_oracle
+@@ -71,7 +61,7 @@
+ #   '----------------------------------------------------------------------'
+ 
+ # Sections that run fast and do no caching
+-SYNC_SECTIONS="instance sessions logswitches undostat recovery_area processes recovery_status longactivesessions dataguard_stats performance"
++SYNC_SECTIONS="instance sessions logswitches undostat recovery_area processes recovery_status longactivesessions dataguard_stats performance buffer_cache"
+ 
+ # Sections that are run in the background and at a larger interval.
+ # Note: sections not listed in SYNC_SECTIONS or ASYNC_SECTIONS will not be
+@@ -129,6 +119,22 @@
+ #   | them to stdout. All queries output the database name or the instane  |
+ #   | name as first column.                                                |
+ #   '----------------------------------------------------------------------'
++
++sql_buffer_cache()
++{
++    if [ "$AT_LEAST_ORACLE_101" = 'yes' ] ; then
++        echo 'PROMPT <<<oracle_buffer_cache:sep(124)>>>'
++        echo "select upper(i.INSTANCE_NAME)
++                    ||'|'|| a.value
++                    ||'|'|| b.value
++                    ||'|'|| c.value
++            from v\$instance i,
++                 v\$sysstat a, v\$sysstat b, v\$sysstat c 
++            where a.name = 'physical reads cache' 
++                  and b.name = 'consistent gets from cache' 
++                  and c.name = 'db block gets from cache';"
++    fi
++}
+ 
+ sql_performance()
+ {
