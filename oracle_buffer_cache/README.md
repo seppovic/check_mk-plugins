@@ -3,8 +3,8 @@ This check monitors the buffer cache hit ratio in an ORACLE database instance.
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/oracle_buffer_cache/oracle_buffer_cache-1.0.mkp'
-* OMD[SITENAME]:~$ check_mk -P install oracle_buffer_cache-1.0.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/oracle_buffer_cache/oracle_buffer_cache-1.0.1.mkp'
+* OMD[SITENAME]:~$ check_mk -P install oracle_buffer_cache-1.0.1.mkp
 
 # Requirements
 * mk_oracle plugin installed, configured and patched with this patch:
@@ -16,5 +16,6 @@ This check monitors the buffer cache hit ratio in an ORACLE database instance.
 # Known issues
 
 # History
-* 1.0   first release
+* 1.0.1 Fixed WATO file.
+* 1.0   first release.
 

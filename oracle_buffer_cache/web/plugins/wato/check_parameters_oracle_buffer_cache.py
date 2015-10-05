@@ -3,7 +3,7 @@ subgroup_applications = _("Applications, Processes & Services")
 
 register_check_parameters(
     subgroup_applications,
-    "entropy_avail",
+    "oracle_buffer_cache",
     _("Oracle buffer Cache"),
     Dictionary(
         help = _("The first time an Oracle Database user process requires a "
@@ -27,6 +27,10 @@ register_check_parameters(
             ),
         ],
     ),
-    None,
+    TextAscii(
+        title = _("Instance Name"),
+        help = _("Name of the Service description without the ORA prefix and the Buffer Cache suffix")
+    ),
     match_type = "dict",
 )
+
