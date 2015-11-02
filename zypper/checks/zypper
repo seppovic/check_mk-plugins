@@ -40,7 +40,6 @@ def inventory_zypper(info):
     return [(None,{})]
 
 def check_zypper(_no_item, params, info):
-    global g_counters
     patch_types = {}
     updates = 0
     locks = []
@@ -51,6 +50,7 @@ def check_zypper(_no_item, params, info):
         return 3, firstline
 
     for line in info:
+        # 5 patches needed (2 security patches)
         if len(line) >= 5 and line[4].lower().strip() == 'needed':
             patch_type = line[3].strip()
             patch_types.setdefault(patch_type, 0)
@@ -85,13 +85,13 @@ def check_zypper(_no_item, params, info):
 
                 # 
                 # check if security updates are available for longer than params["duration"] threshold 
-
-                countername = "zypper.duration"
                 # initialize if counter does not exist, dont raise exception or else
-                if not countername in g_counters:
-                    g_counters[countername] = (this_time, 0)
+                countername = "zypper.duration"
+                old_state = get_item_state(countername, None)
+                if old_state is None:
+                    old_state = (this_time, 0)
 
-                last_time, last_val = g_counters.get(countername)
+                last_time, last_val = old_state
                 if c >= 1:
                     dur_warn, dur_crit = params['duration']
                     timedif_days = saveint((this_time - last_time) / 86400)
@@ -103,7 +103,7 @@ def check_zypper(_no_item, params, info):
                         dur_state = 1
                         dur_marker = '(!)'
                     elif last_val == 0:
-                        g_counters[countername] = (this_time, 1)
+                        set_item_state(countername, (this_time, 1))
                         dur_state = 0
                         dur_marker = ''
                     else:
@@ -113,7 +113,7 @@ def check_zypper(_no_item, params, info):
                     infotext = "Security updates available for %d days%s. " % (timedif_days, dur_marker) + infotext
                     state = max(dur_state, state)
                 else:
-                    g_counters[countername] = (this_time, 0)
+                    set_item_state(countername, (this_time, 0))
 
             elif t == "recommended":
                 rec_warn, rec_crit = params['recommended']
@@ -131,7 +131,6 @@ def check_zypper(_no_item, params, info):
 
             else:
                 marker = ''
-
             infos.append("%s: %d%s" % (t, c, marker))
         infotext += " (" + ", ".join(infos) + ")"
 
