@@ -3,7 +3,7 @@ agents: snmp
 catalog: hw/network/cisco
 author: Markus Weber <markus.weber@lfst.bayern.de>
 license: GPL
-distribution: check_mk
+distribution: seppovic
 description:
  This check uses SNMP to report the number of active Remote Access Sessions for
  the following VPN protocols:

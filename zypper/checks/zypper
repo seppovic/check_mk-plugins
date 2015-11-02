@@ -1,0 +1,157 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+#################################################################
+#---------------------------------------------------------------#
+# Author: Markus Weber                                          #
+# Contact: markus.weber@lfst.bayern.de                          #
+# License: GPL                                                  #
+# File: zypper                                                  #
+# Version: 1.0                                                  #
+# Revision: 02.11.2015                                          #
+# Description: This check lets you configure thresholds for     #
+# zypper updates.
+#################################################################
+
+
+# Example Output
+#
+# <<<zypper:sep(124)>>>
+# 5 patches needed (2 security patches)
+# Updates for openSUSE 12.1 12.1-1.4 | openSUSE-2012-326 | 1       | recommended | needed | Softwarestack update
+# Updates for openSUSE 12.1 12.1-1.4 | openSUSE-2012-316 | 1       | security    | needed | bind: Fixed a remote denial of service
+# Updates for openSUSE 12.1 12.1-1.4 | openSUSE-2012-318 | 1       | recommended | needed | mdadm: fixed some race conditions during startup
+# Updates for openSUSE 12.1 12.1-1.4 | openSUSE-2012-320 | 1       | security    | needed | update for libxml2
+# Updates for openSUSE 12.1 12.1-1.4 | openSUSE-2012-321 | 1       | recommended | needed | sudo: fixed pam session leak and tls option handling
+# Updates for openSUSE 12.1 12.1-1.4 | openSUSE-2012-324 | 1       | recommended | needed | util-linux: make mount honor 'noexec' and 'user' option
+# 1 | apache | package | (any)
+# 2 | mysql  | package | (any)
+
+
+### Parameters 
+# duration as Days (warn, crit)
+# security, recommended as number (warn, crit)
+# locks as nagios state ( 2 = crit, 1 = warn, 0 = ok)
+factory_settings["zypper_default_levels"] = { "duration" : (0, 0), "security" : (0, 0), "recommended" : (0, 0),  "locks" : 0 }
+
+def inventory_zypper(info):
+    # the agent section is only present when the agent has
+    # detected that zypper is installed, therefore the check
+    # can always register
+    return [(None,{})]
+
+def check_zypper(_no_item, params, info):
+    global g_counters
+    patch_types = {}
+    updates = 0
+    locks = []
+    state = 0
+
+    firstline = " ".join(info[0])
+    if re.match("ERROR:", firstline):
+        return 3, firstline
+
+    for line in info:
+        if len(line) >= 5 and line[4].lower().strip() == 'needed':
+            patch_type = line[3].strip()
+            patch_types.setdefault(patch_type, 0)
+            patch_types[patch_type] += 1
+            updates += 1
+        elif len(line) == 4:
+            locks.append(line[1])
+
+    infotext = "%d updates" % updates
+    if updates:
+        patch_items = patch_types.items()
+        patch_items.sort()
+        infos = []
+        this_time = int(time.time())
+        first_see_counter = 0
+
+#       t = typ "security", "recommended" or anything else we dont care about, c = count
+        for t,c in patch_items:
+            if t == "security":
+                sec_warn, sec_crit = params['security']
+                if c >= sec_crit and sec_crit != 0:
+                    sec_marker = '(!!)'
+                    sec_state = 2
+                elif c >= sec_warn and sec_warn != 0:
+                    sec_marker = '(!)'
+                    sec_state = 1
+                else:
+                    sec_marker = ''
+                    sec_state = 0 
+                state = max(sec_state, state)
+                marker = sec_marker
+
+                # 
+                # check if security updates are available for longer than params["duration"] threshold 
+
+                countername = "zypper.duration"
+                # initialize if counter does not exist, dont raise exception or else
+                if not countername in g_counters:
+                    g_counters[countername] = (this_time, 0)
+
+                last_time, last_val = g_counters.get(countername)
+                if c >= 1:
+                    dur_warn, dur_crit = params['duration']
+                    timedif_days = saveint((this_time - last_time) / 86400)
+
+                    if last_val == 1 and timedif_days >= dur_crit and dur_crit != 0:
+                        dur_state = 2
+                        dur_marker = '(!!)'
+                    elif last_val == 1 and timedif_days >= dur_warn and dur_warn != 0:
+                        dur_state = 1
+                        dur_marker = '(!)'
+                    elif last_val == 0:
+                        g_counters[countername] = (this_time, 1)
+                        dur_state = 0
+                        dur_marker = ''
+                    else:
+                        dur_state = 0
+                        dur_marker = ''
+                    
+                    infotext = "Security updates available for %d days%s. " % (timedif_days, dur_marker) + infotext
+                    state = max(dur_state, state)
+                else:
+                    g_counters[countername] = (this_time, 0)
+
+            elif t == "recommended":
+                rec_warn, rec_crit = params['recommended']
+                if c >= rec_crit and rec_crit != 0:
+                    rec_marker = '(!!)'
+                    rec_state = 2
+                elif c >= rec_warn and rec_warn != 0:
+                    rec_marker = '(!)'
+                    rec_state = 1
+                else: 
+                    rec_marker = ''
+                    rec_state = 0
+                state = max(rec_state, state)
+                marker = rec_marker
+
+            else:
+                marker = ''
+
+            infos.append("%s: %d%s" % (t, c, marker))
+        infotext += " (" + ", ".join(infos) + ")"
+
+    if locks:
+        lockstate = params['locks']
+        state = max(lockstate, state)
+
+        if lockstate == 2:
+            infotext += ", %d locks(!!)" % len(locks)
+        elif lockstate == 1:
+            infotext += ", %d locks(!)" % len(locks)
+        else:
+            infotext += ", %d locks" % len(locks)
+
+    return state, infotext
+
+check_info['zypper'] = {
+    "service_description"     : "Zypper Updates",
+    "check_function"          : check_zypper,
+    "inventory_function"      : inventory_zypper,
+    "default_levels_variable" : "zypper_default_levels",
+    "group"                   : "zypper",
+}

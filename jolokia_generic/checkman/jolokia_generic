@@ -3,7 +3,7 @@ author: Markus Weber <markus.weber@lfst.bayern.de>
 agents: linux
 catalog: app/java
 license: GPL
-distribution: check_mk
+distribution: seppovic
 description:
  This Check allows to monitor any given MBean/Attribute of an Application server.
  It is possible to monitor nummeric, either as rate or as gauge value and Strings
