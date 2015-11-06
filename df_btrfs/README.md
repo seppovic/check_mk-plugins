@@ -43,6 +43,7 @@ If at least one device in the **btrfs fi show** output is fully utilised like th
 * A btrfs filesystem, obviously.
 
 # TODO
+* The current check does not catch all situations where btrfs stops can't write to disk. Further investigation necessary.
 
 # Known issues
 
