@@ -1,5 +1,5 @@
 {'author': 'Markus Weber',
- 'description': 'Monitor openldap\'s slapd Operation and Network statistics and replication status via monitoring DB.',
+ 'description': 'Monitor openldaps slapd Operation and Network statistics and replication status via monitoring DB.',
  'download_url': 'https://github.com/seppovic/check_mk-plugins/tree/master/slapd',
  'files': {'agents': [],
            'checkman': ['slapd_instance',
@@ -26,6 +26,6 @@
                    'plugins/wato/check_parameters_slapd_syncrepl.py']},
  'name': 'slapd',
  'title': 'slapd',
- 'version': '1.0',
+ 'version': '1.0.1',
  'version.min_required': '1.2.7i3p3',
  'version.packaged': '1.2.7i3p3'}

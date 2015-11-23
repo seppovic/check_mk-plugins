@@ -3,8 +3,8 @@ Monitor openldap's slapd Operation and Network statistics and replication status
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/slapd/slapd-1.0.mkp'
-* OMD[SITENAME]:~$ check_mk -P install slapd-1.0.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/slapd/slapd-1.0.1.mkp'
+* OMD[SITENAME]:~$ check_mk -P install slapd-1.0.1.mkp
 
 # Requirements
 * Openldap Server with accessible Monitoring DB.
@@ -20,4 +20,5 @@ Monitor openldap's slapd Operation and Network statistics and replication status
 # Known issues
 
 # History
+* 1.0.1 fixed mkp file, exchange complained about the apostrophe.
 * 1.0   first release
