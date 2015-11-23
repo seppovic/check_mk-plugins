@@ -23,9 +23,9 @@
 
 # no default thresholds
 factory_settings["slapd_stats_connections_defaults"] = {
-                                                        "Current": (0,0),
-                                                        "rate": (0,0),
-                                                        "Total": (0,0),
+                                                        "Current": (0, 0),
+                                                        "rate": (0.0, 0.0),
+                                                        "Total": (0, 0),
 }
 
 def inventory_slapd_stats_connections(info):
@@ -54,15 +54,15 @@ def check_slapd_stats_connections(item, params, info):
             
                 countername = "slapd.stats.connections.%s" % op
                 rate = get_rate(countername, this_time, value)
-                r_warn, r_crit = params.get("rate", (0,0))
+                r_warn, r_crit = params.get("rate", (0.0, 0.0))
                 
                 perfdata.append(("rate", rate, r_warn, r_crit))
                 if r_crit != 0 and rate >= r_crit:
                     status = max(status, 2)
-                    output += "Connectionrate: %.2f(!!); " % rate
+                    output += "Connectionrate: %.2f(!!) warn/crit=%.2f/%.2f; " % (rate, r_warn, r_crit)
                 elif r_warn != 0 and rate >= r_warn:
                     status = max(status, 1)
-                    output += "Connectionrate: %.2f(!); " % rate
+                    output += "Connectionrate: %.2f(!) warn/crit=%.2f/%.2f; " % (rate, r_warn, r_crit)
                 else:
                     status = max(status, 0)
                     output += "Connectionrate: %.2f; " % rate
@@ -97,5 +97,5 @@ check_info["slapd_stats_connections"] = {
     'inventory_function':      inventory_slapd_stats_connections,
     'service_description':     'SLAPD %s Connections',
     'has_perfdata':            True,
-    'group':                   'slapd',
+    'group':                   'slapd_stats_connections',
 }

@@ -1,0 +1,19 @@
+title: OpenLDAP slapd Monitoring
+agents: linux
+distribution: Markus Weber
+catalog: app/slapd
+license: GPL
+description:
+ This check monitors the state of an OpenLDAP slapd Instance. The check tests the
+ connection to the Server and returns the connectiontime in seconds.
+
+ All other slapd checks are dependent on this one, they get stale if this check fails.
+
+item:
+ SLAPD <Instance name>
+
+perfdata:
+ The connectiontime in seconds.
+
+inventory:
+ One service will be created for each slapd instance configured in lokal config file.

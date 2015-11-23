@@ -73,5 +73,5 @@ check_info["slapd_stats_statistics"] = {
     'inventory_function':      inventory_slapd_stats_statistics,
     'service_description':     'SLAPD %s statistics',
     'has_perfdata':            True,
-    'group':                   'slapd',
+    'group':                   'slapd_stats_statistics',
 }

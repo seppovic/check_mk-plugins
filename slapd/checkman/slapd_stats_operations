@@ -1,0 +1,21 @@
+title: Number of all operations in an slapd instance
+agents: linux
+catalog: app/slapd
+license: GPL
+distribution: Markus Weber
+description:
+ This check monitors all Operation types, you can set warn and crit
+ thresholds to each type. There is also an deviance check wich alarms you about
+ the ratio of Initiated to Completed operations
+
+item:
+ SLAPD <Instance name> Operations
+
+[parameters]
+parameters (dict):
+
+perfdata:
+ one for each operation type.
+
+inventory:
+ One service will be created for each slapd instance configured in lokal config file.

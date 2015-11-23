@@ -63,6 +63,5 @@ check_info["slapd_syncrepl"] = {
     'inventory_function':      inventory_slapd_syncrepl,
     'service_description':     'SLAPD %s syncrepl status',
     'has_perfdata':            True,
-    'group':                   'slapd',
+    'group':                   'slapd_syncrepl',
 }
-

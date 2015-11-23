@@ -1,5 +1,5 @@
 # slapd
-Monitor openldap's slapd statistics and replication status via monitoring DB.
+Monitor openldap's slapd Operation and Network statistics and replication status via monitoring DB.
 
 # Installation
 * $ su - SITENAME
@@ -7,14 +7,15 @@ Monitor openldap's slapd statistics and replication status via monitoring DB.
 * OMD[SITENAME]:~$ check_mk -P install slapd-1.0.mkp
 
 # Requirements
-* Openldap Server with accessable Monitoring DB.
-* For replication status check, also a service Account/bind-user is required.
+* Openldap Server with accessible Monitoring DB.
+* For replication status check, the provider has to be searchable.
 * slapd.pl plugin for check_mk_agent installed on the target system.
 
 # TODO
 * specify ACL for service Accounts.
 * extend agent for Multi-Master Replication check.
 * implement Trends for statistic checks?!
+* pnp templates
 
 # Known issues
 

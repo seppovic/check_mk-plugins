@@ -1,0 +1,20 @@
+title: slapd Network statistics.
+agents: linux
+catalog: app/slapd
+license: GPL
+distribution: Markus Weber
+description:
+ This check monitors the Entries, Referrals, PDU and Bytes rate sent by
+ slapd.
+
+item:
+ SLAPD <Instance name> Statistics
+
+[parameters]
+parameters (dict):
+
+perfdata:
+ one for each type.
+
+inventory:
+ One service will be created for each slapd instance configured in lokal config file.

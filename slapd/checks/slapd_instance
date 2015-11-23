@@ -22,7 +22,7 @@
 
 
 factory_settings["slapd_instance_defaults"] = {
-                                               'maxConnectionTime': (0, 0)
+                                               'maxConnectionTime': (0.0, 0.0)
                                                }
 
 def inventory_slapd_instance(info):
@@ -39,7 +39,7 @@ def check_slapd_instance(item, params, info):
     
     for line in info:
         instance, value = line
-        warn, crit = params.get('maxConnectionTime', (0, 0) )
+        warn, crit = params.get('maxConnectionTime', (0.0, 0.0) )
         
         if instance == item:
             if value.startswith("ERROR"):
@@ -48,10 +48,10 @@ def check_slapd_instance(item, params, info):
             value = float(value)
             if crit != 0 and value >= crit:
                 status = max(status, 2)
-                output += "Connected in %.2f (!!) seconds" % value
+                output += "Connected in %.2f (!!) seconds warn/crit=%.2f/%.2f" % (value, warn, crit)
             elif warn != 0 and rate >= warn:
                 status = max(status, 1)
-                output += "Connected in %.2f (!) seconds" % value
+                output += "Connected in %.2f (!) seconds warn/crit=%.2f/%.2f" % (value, warn, crit)
             else:
                 status = max(status, 0)
                 output += "Connected in %.2f seconds" % value
@@ -65,6 +65,6 @@ check_info["slapd_instance"] = {
     'inventory_function':      inventory_slapd_instance,
     'service_description':     'SLAPD %s',
     'has_perfdata':            True,
-    'group':                   'slapd',
+    'group':                   'slapd_instance',
 }
 

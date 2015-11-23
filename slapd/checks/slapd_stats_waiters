@@ -70,5 +70,5 @@ check_info["slapd_stats_waiters"] = {
     'inventory_function':      inventory_slapd_stats_waiters,
     'service_description':     'SLAPD %s Waiters',
     'has_perfdata':            True,
-    'group':                   'slapd',
+    'group':                   'slapd_stats_waiters',
 }
