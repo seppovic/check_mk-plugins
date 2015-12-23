@@ -83,7 +83,7 @@ sub parse_csn {
 	my ($utime, $mtime, $count, $sid, $mod) = ($csn =~ m/(\d{14})\.?(\d{6})?Z#(\w{6})#(\w{2,3})#(\w{6})/g);
 	warn "D! parse_csn: parsed to: utime: $utime, count: $count, sid: $sid, mod: $mod" if $debug;
 	return ($utime, $count, $sid, $mod);
-}    # EEND pars_csn
+}    # END pars_csn
 
 sub get_masteruri {
 	my $conn = $_[0];
@@ -145,23 +145,14 @@ sub get_contextcsn {
 # Get values
 	foreach ($entry->get_value('contextCSN')) {
 		warn "D! Found ContextCSN: " . $_ if $debug;
-
-# Keep only ContextCSN with ServerID
 		my @csn = &parse_csn($_);
 
-# TODO Multimaster
-#        if ( !$ldap_singlemaster ) {
-#            if ( $serverid eq $csn[2] ) {
-#                $contextcsn = $_;
-#                &verbose( '2',
-#                    "ContextCSN match with SID $serverid: " . $contextcsn );
-#                last;
-#            }
-#        } else {
-		$contextcsn = $_;
-		warn "D! ContextCSN match with SID $serverid: " . $contextcsn if $debug;
-
-#        }
+# Keep only ContextCSN with corresponding ServerID
+		if ( $csn[2] eq $serverid ) {
+			$contextcsn = $_;
+			warn "D! ContextCSN match with SID $serverid: " . $contextcsn if $debug;
+			last;
+		} 
 	}
 	croak "Found no ContextCSN with SID $serverid" if !$contextcsn;
 	return $contextcsn;
@@ -274,6 +265,7 @@ my $secure       = '+tls';
 my $binddn       = 'cn=Monitor';
 my $bindpw       = '';
 my $ldap_version = 3;
+my $serverid     = '000';
 my %slapd_instances;
 
 try {
@@ -292,6 +284,7 @@ for my $instancename (keys %slapd_instances) {
 		$slapd_instances{$instancename}{binddn}  //= $binddn;
 		$slapd_instances{$instancename}{bindpw}  //= $bindpw;
 		$slapd_instances{$instancename}{version} //= $ldap_version;
+		$slapd_instances{$instancename}{serverid} //= $serverid;
 		if ($slapd_instances{$instancename}{uri} =~ m{^ldap(s?|\+tls?)://([^/]+)/(.*)$}) {
 			$slapd_instances{$instancename}{secure} //= $1;
 			$slapd_instances{$instancename}{server} //= $2;
@@ -336,7 +329,6 @@ for my $instancename (keys %slapd_instances) {
 		};
 
 #	syncrepl master
-# 	TODO Multi Master ?!
 		if (exists $slapd_instances{$instancename}{syncrepl}) {
 			try {
 				say "<<<slapd_syncrepl:sep(44)>>>";
@@ -362,8 +354,8 @@ for my $instancename (keys %slapd_instances) {
 				);
 				$slapd_instances{$instancename}{syncrepl}{suffix} //= get_suffix($master_conn);
 
-				my $slaveCSN  = get_contextcsn($slave_conn,  $slapd_instances{$instancename}{suffix},           '000');
-				my $masterCSN = get_contextcsn($master_conn, $slapd_instances{$instancename}{syncrepl}{suffix}, '000');
+				my $slaveCSN  = get_contextcsn($slave_conn,  $slapd_instances{$instancename}{suffix},           $slapd_instances{$instancename}{serverid});
+				my $masterCSN = get_contextcsn($master_conn, $slapd_instances{$instancename}{syncrepl}{suffix}, $slapd_instances{$instancename}{serverid});
 
 				my @slavecsn_elts  = parse_csn($slaveCSN);
 				my @mastercsn_elts = parse_csn($masterCSN);
