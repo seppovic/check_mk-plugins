@@ -31,6 +31,6 @@ register_check_parameters(
         title = _("Instance Name"),
         help = _("Name of the Service description without the ORA prefix and the Buffer Cache suffix")
     ),
-    match_type = "dict",
+    "dict",
 )
 

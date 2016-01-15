@@ -3,8 +3,8 @@ This check returns the number of active sessions defined in Cisco Remote Access 
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/cisco_ras_sessions/cisco_ras_sessions-1.0.1.mkp'
-* OMD[SITENAME]:~$ check_mk -P install cisco_ras_sessions-1.0.1.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/cisco_ras_sessions/cisco_ras_sessions-1.0.2.mkp'
+* OMD[SITENAME]:~$ check_mk -P install cisco_ras_sessions-1.0.2.mkp
 
 # Requirements
 * A Cisco ASA or similar device.
@@ -13,5 +13,6 @@ This check returns the number of active sessions defined in Cisco Remote Access 
 * None so far.
 
 # History
+* 1.0.2 Fixed Bug in WATO, not using named Parameters anymore, makes this plugin usable with check_mk pre 1.2.7
 * 1.0.1 Fixed Bug in WATO configuration and renamed it's parameters file.
-* 1.0   first release.
+* 1.0   First release.

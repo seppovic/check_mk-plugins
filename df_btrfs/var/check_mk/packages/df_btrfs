@@ -12,6 +12,6 @@
  'name': 'df_btrfs',
  'num_files': 3,
  'title': 'df_btfs',
- 'version': '1.0.2',
+ 'version': '1.0.3',
  'version.min_required': '1.2.7i1',
  'version.packaged': '1.2.7i2'}

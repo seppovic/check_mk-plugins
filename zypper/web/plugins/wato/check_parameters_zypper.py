@@ -45,5 +45,5 @@ register_check_parameters(
         ]
     ),
     None, #instance
-    match_type = "dict",
+    "dict",
 )

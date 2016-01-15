@@ -11,7 +11,7 @@
            'web': ['plugins/wato/check_parameters_netapp_cpoints.py']},
  'name': 'netapp_cpoints',
  'title': 'netapp_cpoints',
- 'version': '1.1.1',
+ 'version': '1.1.2',
  'version.min_required': '1.2.5i4',
  'version.packaged': '1.2.7i1p2'}
 

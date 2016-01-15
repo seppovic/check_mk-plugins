@@ -6,8 +6,8 @@ jolokia.cfg in agents/cfg_examples/ folder for an example.
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/jolokia_generic/jolokia_generic-2.2.2.mkp'
-* OMD[SITENAME]:~$ check_mk -P install jolokia_generic-2.2.2.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/jolokia_generic/jolokia_generic-2.2.3.mkp'
+* OMD[SITENAME]:~$ check_mk -P install jolokia_generic-2.2.3.mkp
 
 # Requirements
 * Application server with [jolokia](http://jolokia.org/) deployed.
@@ -18,6 +18,7 @@ jolokia.cfg in agents/cfg_examples/ folder for an example.
 # Known issues
 
 # History
+* 2.2.3 Fixed Bug in WATO, not using named Parameters anymore, makes this plugin usable with check_mk pre 1.2.7
 * 2.2.2 Fixed Bug in WATO configuration and brought agent in sync with git.mathias-kettner.de
 * 2.2.1 Fixed Display of pnp-graph, sort Attributes by value to keep the highest in the background
 * 2.2   Added functionality to specify thresholds for each value of a service
@@ -28,4 +29,4 @@ jolokia.cfg in agents/cfg_examples/ folder for an example.
 * 1.2   Added WATO plugin and checkman
 * 1.1   Added pnp-template
 * 1.0.1 Fixed Bug in inventory definition
-* 1.0   first release
+* 1.0   First release

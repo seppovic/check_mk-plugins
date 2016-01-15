@@ -12,6 +12,6 @@
  'name': 'jolokia_generic',
  'num_files': 4,
  'title': 'jolokia_generic',
- 'version': '2.2.2',
+ 'version': '2.2.3',
  'version.min_required': '1.2.5i5p2',
  'version.packaged': '1.2.7i2'}

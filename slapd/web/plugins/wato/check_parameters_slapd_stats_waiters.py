@@ -31,5 +31,5 @@ register_check_parameters(
         title = _("Instance Name"),
         help = _("Only needed if you have multiple SLAPD Instances on one server"),
     ),
-    match_type = "dict",
+    "dict",
 )

@@ -41,5 +41,5 @@ register_check_parameters(
         title = _("Item Name"),
         help = _("Name of the Service description without the JVM prefix")
     ),
-    match_type = "dict",
+    "dict",
 )
