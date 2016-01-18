@@ -11,6 +11,6 @@
            'web': ['plugins/wato/check_parameters_zypper.py']},
  'name': 'zypper',
  'title': 'zypper',
- 'version': '1.0.1',
+ 'version': '1.1.1',
  'version.min_required': '1.2.7i2p2',
  'version.packaged': '1.2.7i2p2'}
