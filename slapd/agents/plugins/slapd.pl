@@ -50,7 +50,6 @@ my %global_vars = (
 					   'title'  => 'Number of Connections',
 					   'info'   => 'Number of connections to the LDAP server',
 	},
-
 # waiters
 	'waiters' => {
 				   'search' => 'cn=Waiters,cn=Monitor',
@@ -148,11 +147,11 @@ sub get_contextcsn {
 		my @csn = &parse_csn($_);
 
 # Keep only ContextCSN with corresponding ServerID
-		if ( $csn[2] eq $serverid ) {
+		if ($csn[2] eq $serverid) {
 			$contextcsn = $_;
 			warn "D! ContextCSN match with SID $serverid: " . $contextcsn if $debug;
 			last;
-		} 
+		}
 	}
 	croak "Found no ContextCSN with SID $serverid" if !$contextcsn;
 	return $contextcsn;
@@ -278,13 +277,14 @@ warn 'D! read this as configuration: ' . Dumper(\%slapd_instances) if $debug;
 
 # Merge config and query each instance:
 for my $instancename (keys %slapd_instances) {
+	my $slave_conn;
 	print "<<<slapd_instance:sep(124)>>>\n" . $instancename . "|";
+
 	try {
 		$slapd_instances{$instancename}{uri}     //= $uri;
 		$slapd_instances{$instancename}{binddn}  //= $binddn;
 		$slapd_instances{$instancename}{bindpw}  //= $bindpw;
 		$slapd_instances{$instancename}{version} //= $ldap_version;
-		$slapd_instances{$instancename}{serverid} //= $serverid;
 		if ($slapd_instances{$instancename}{uri} =~ m{^ldap(s?|\+tls?)://([^/]+)/(.*)$}) {
 			$slapd_instances{$instancename}{secure} //= $1;
 			$slapd_instances{$instancename}{server} //= $2;
@@ -292,20 +292,13 @@ for my $instancename (keys %slapd_instances) {
 		} else {
 			croak "ERROR - Could not merge config to a usable form";
 		}
-		if ($slapd_instances{$instancename}{params}) {
-			croak "ERROR - Plugin does not accept additional Parameters in ldap uri";
-		}
-
+		croak "ERROR - Plugin does not accept additional Parameters in ldap uri" if ($slapd_instances{$instancename}{params});
 		warn 'D! merged configuration to: ' . Dumper($slapd_instances{$instancename}) if $debug;
 
 #
 # Do the actual work
 #
 #	Open Connection to local LDAP:
-
-		my $slave_conn;
-		my $master_conn;
-
 		try {
 			my $start = time();
 			$slave_conn = get_ldap_connection(
@@ -328,51 +321,77 @@ for my $instancename (keys %slapd_instances) {
 			croak "ERROR - $_";
 		};
 
-#	syncrepl master
+#	syncrepl if we are on a slave or a Multi-Master Host
 		if (exists $slapd_instances{$instancename}{syncrepl}) {
-			try {
-				say "<<<slapd_syncrepl:sep(44)>>>";
-				$slapd_instances{$instancename}{suffix}            //= get_suffix($slave_conn);
-				$slapd_instances{$instancename}{syncrepl}{uri}     //= get_masteruri($slave_conn) . '/';
-				$slapd_instances{$instancename}{syncrepl}{binddn}  //= $binddn;
-				$slapd_instances{$instancename}{syncrepl}{bindpw}  //= $bindpw;
-				$slapd_instances{$instancename}{syncrepl}{version} //= $ldap_version;
+			my @masters = ();
+			say "<<<slapd_syncrepl:sep(44)>>>";
+
+			if (ref($slapd_instances{$instancename}{syncrepl}) eq 'HASH') {
+				$slapd_instances{$instancename}{suffix}             //= get_suffix($slave_conn);
+				$slapd_instances{$instancename}{syncrepl}{uri}      //= get_masteruri($slave_conn) . '/';
+				$slapd_instances{$instancename}{syncrepl}{binddn}   //= $binddn;
+				$slapd_instances{$instancename}{syncrepl}{bindpw}   //= $bindpw;
+				$slapd_instances{$instancename}{syncrepl}{version}  //= $ldap_version;
+				$slapd_instances{$instancename}{syncrepl}{serverid} //= $serverid;
 				if ($slapd_instances{$instancename}{syncrepl}{uri} =~ m{^ldap(s?|\+tls?)://([^/]+)/(.*)$}) {
 					$slapd_instances{$instancename}{syncrepl}{secure} //= $1;
 					$slapd_instances{$instancename}{syncrepl}{server} //= $2;
 					$slapd_instances{$instancename}{syncrepl}{params} //= $3;
 				} else {
-					croak "ERROR - Could not merge provider config to a usable form";
+					croak "ERROR - Could not merge provider config of syncrepl key to a usable form";
 				}
+				croak "ERROR - Plugin does not accept additional Parameters in ldap uri" if ($slapd_instances{$instancename}{syncrepl}{params});
+				push(@masters, $slapd_instances{$instancename}{syncrepl});
 
-				$master_conn = get_ldap_connection(
-												   $slapd_instances{$instancename}{syncrepl}{uri},
-												   $slapd_instances{$instancename}{syncrepl}{binddn},
-												   $slapd_instances{$instancename}{syncrepl}{bindpw},
-												   $slapd_instances{$instancename}{syncrepl}{secure},
-												   $slapd_instances{$instancename}{syncrepl}{version}
-				);
-				$slapd_instances{$instancename}{syncrepl}{suffix} //= get_suffix($master_conn);
+			} elsif (ref($slapd_instances{$instancename}{syncrepl}) eq 'ARRAY') {
+				for my $syncrepl_array (@{ $slapd_instances{$instancename}{syncrepl} }) {
+					$slapd_instances{$instancename}{suffix} //= get_suffix($slave_conn);
+					$syncrepl_array->{uri}                  //= get_masteruri($slave_conn) . '/';
+					$syncrepl_array->{binddn}               //= $binddn;
+					$syncrepl_array->{bindpw}               //= $bindpw;
+					$syncrepl_array->{version}              //= $ldap_version;
+					$syncrepl_array->{serverid}             //= $serverid;
+					if ($syncrepl_array->{uri} =~ m{^ldap(s?|\+tls?)://([^/]+)/(.*)$}) {
+						$syncrepl_array->{secure} //= $1;
+						$syncrepl_array->{server} //= $2;
+						$syncrepl_array->{params} //= $3;
+					} else {
+						croak "ERROR - Could not merge provider config of syncrepl key to a usable form";
+					}
+					croak "ERROR - Plugin does not accept additional Parameters in ldap uri" if ($syncrepl_array->{params});
+				}
+				@masters = @{ $slapd_instances{$instancename}{syncrepl} };
 
-				my $slaveCSN  = get_contextcsn($slave_conn,  $slapd_instances{$instancename}{suffix},           $slapd_instances{$instancename}{serverid});
-				my $masterCSN = get_contextcsn($master_conn, $slapd_instances{$instancename}{syncrepl}{suffix}, $slapd_instances{$instancename}{serverid});
-
-				my @slavecsn_elts  = parse_csn($slaveCSN);
-				my @mastercsn_elts = parse_csn($masterCSN);
-				my $deltacsn       = abs($mastercsn_elts[0] - $slavecsn_elts[0]);
-
-				say $instancename . "," . sprintf("%.2f", $deltacsn);
-
-				my $message = $slave_conn->unbind();
-				$message->code && croak "could not unbind from server: " . $message->error;
-				warn "D! took local connection successfully down: " . $message->code . ', ' . $message->error if $debug;
-				$message = $master_conn->unbind();
-				$message->code && croak "could not unbind from server: " . $message->error;
-				warn "D! took master connection successfully down: " . $message->code . ', ' . $message->error if $debug;
+			} else {
+				croak "ERROR - syncrepl key has to be a HASHREF or a ARRAYREF";
 			}
-			catch {
-				croak "ERROR - $_";
-			};
+
+			for my $master_ref (@masters) {
+				try {
+					my $master_conn;
+					$master_conn = get_ldap_connection($master_ref->{server}, $master_ref->{binddn}, $master_ref->{bindpw},
+													   $master_ref->{secure}, $master_ref->{version});
+					$master_ref->{suffix} //= get_suffix($master_conn);
+
+					my $slaveCSN = get_contextcsn($slave_conn, $slapd_instances{$instancename}{suffix}, $master_ref->{serverid});
+					my $masterCSN = get_contextcsn($master_conn, $master_ref->{suffix}, $master_ref->{serverid});
+
+					my @slavecsn_elts  = parse_csn($slaveCSN);
+					my @mastercsn_elts = parse_csn($masterCSN);
+					my $deltacsn       = abs($mastercsn_elts[0] - $slavecsn_elts[0]);
+
+					say $instancename . "," . $master_ref->{server} . "," . sprintf("%.2f", $deltacsn);
+					my $message = $master_conn->unbind();
+					$message->code && croak "could not unbind from server: " . $message->error;
+					warn "D! took master connection successfully down: " . $message->code . ', ' . $message->error if $debug;
+				}
+				catch {
+					croak "ERROR - $_";
+				};
+			}
+			my $message = $slave_conn->unbind();
+			$message->code && croak "could not unbind from server: " . $message->error;
+			warn "D! took local connection successfully down: " . $message->code . ', ' . $message->error if $debug;
 		}
 	}
 	catch {

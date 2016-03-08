@@ -6,8 +6,8 @@
 # Contact: markus.weber@lfst.bayern.de                          #
 # License: GPL                                                  #
 # File: slapd_stats                                             #
-# Version: 1.0                                                  #
-# Revision: 30.10.2015                                          #
+# Version: 1.1                                                  #
+# Revision: 08.03.2016                                          #
 # Description: Monitor openldap via Monitoring DB.              #
 #                                                               #
 #################################################################
@@ -49,7 +49,7 @@ def check_slapd_instance(item, params, info):
             if crit != 0 and value >= crit:
                 status = max(status, 2)
                 output += "Connected in %.2f (!!) seconds warn/crit=%.2f/%.2f" % (value, warn, crit)
-            elif warn != 0 and rate >= warn:
+            elif warn != 0 and value >= warn:
                 status = max(status, 1)
                 output += "Connected in %.2f (!) seconds warn/crit=%.2f/%.2f" % (value, warn, crit)
             else:
@@ -67,4 +67,3 @@ check_info["slapd_instance"] = {
     'has_perfdata':            True,
     'group':                   'slapd_instance',
 }
-
