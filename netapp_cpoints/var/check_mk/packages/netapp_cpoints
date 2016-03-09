@@ -12,6 +12,7 @@
  'name': 'netapp_cpoints',
  'title': 'netapp_cpoints',
  'version': '1.1.2',
+ 'num_files': 4,
  'version.min_required': '1.2.5i4',
  'version.packaged': '1.2.7i1p2'}
 

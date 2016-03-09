@@ -1,5 +1,5 @@
 # slapd
-Monitor openldap's slapd Operation and Network statistics and replication status via monitoring DB.
+Monitor openldap's slapd Operation and Network statistics via monitoring DB and replication status.
 
 # Installation
 * $ su - SITENAME

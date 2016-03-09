@@ -11,6 +11,7 @@
            'web': ['plugins/wato/check_parameters_cisco_ras_sessions.py']},
  'name': 'cisco_ras_sessions',
  'title': 'cisco_ras_sessions',
+ 'num_files': 3,
  'version': '1.0.2',
  'version.min_required': '1.2.5i6p1',
  'version.packaged': '1.2.5i6p1'}
