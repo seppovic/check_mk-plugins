@@ -31,6 +31,7 @@ sub substitute_context {
 		my $val = $pRef->{$key};
 		$string =~ s/\$$key\$/$val/m;
 	}
+	
 	warn "D-substiture_context: to: '" . $string . "'" if $debug;
 	return $string;
 }

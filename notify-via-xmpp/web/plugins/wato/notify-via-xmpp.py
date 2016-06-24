@@ -3,7 +3,7 @@
 
 register_notification_parameters("xmpp.pl",
     Dictionary(
-        optional_keys = ["url_prefix", "resource", "chatroom", "max_len", "timeout", "debug"],
+        optional_keys = ["url_prefix", "resource", "chatroom", "security", "max_len", "timeout", "debug"],
         elements = [
             ( "xmppserver",
               TextAscii(
@@ -25,21 +25,33 @@ register_notification_parameters("xmpp.pl",
               ),
             ),
             ( "host_message",
-              TextUnicode(
+              TextAreaUnicode(
                   title = _("Message for notifications regarding a host"),
                   help = _("Here you are allowed to use all macros that are defined in the "
                            "notification context."),
-                  default_value = "$HOSTNAME$ ($HOSTALIAS$ - $HOSTADDRESS$) - $HOSTSTATE$",
-                  size = 64,
+                  rows = 9,
+                  cols = 58,
+                  monospaced = True,
+                  default_value = """
+HOST: $HOSTNAME$ - $HOSTSTATE$
+Plugin Output: $HOSTOUTPUT$
+Link: $HOSTURL$
+""",
               ),
             ),
             ( "service_message",
-              TextUnicode(
+              TextAreaUnicode(
                   title = _("Message for notifications regarding a service"),
                   help = _("Here you are allowed to use all macros that are defined in the "
                            "notification context."),
-                  default_value = "$HOSTNAME$ ($HOSTALIAS$ - $HOSTADDRESS$) / $SERVICEDESC$ - $SERVICESTATE$",
-                  size = 64,
+                  rows = 9,
+                  cols = 58,
+                  monospaced = True,
+                  default_value = """
+SERVICE: $HOSTNAME$/$SERVICEDESC$ - $SERVICESTATE$
+Plugin Output: $SERVICEOUTPUT$
+Link: $SERVICEURL$
+""",
               ),
             ),
             ( "url_prefix",
@@ -66,7 +78,8 @@ register_notification_parameters("xmpp.pl",
                     help = _("Encrypt the client connection and choose which mechanism should be used. Port is automatically adjusted to 5222 or 5223"),
                     title = _("Dont't use cleartext communication to the xmpp Server"),
                     default = "TLS"
-                )
+                ),
+             ),
             ( "resource",
               TextAscii(
                   title = _("XMPP Resource"),

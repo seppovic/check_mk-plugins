@@ -22,7 +22,7 @@ Notification script to forward notifications to CA-SOI.
 # Installation
 * $ su - SITENAME
 * OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/notify-via-soi/notify-via-soi-1.1.mkp'
-* OMD[SITENAME]:~$ check_mk -P install soi-connector-1.1.mkp
+* OMD[SITENAME]:~$ check_mk -P install notify-via-soi-1.1.mkp
 
 # Requirements
 * CA-SOI (obviously)
