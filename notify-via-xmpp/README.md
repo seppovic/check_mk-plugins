@@ -16,9 +16,6 @@ This is a notificationscript for check_mk monitoring software
     PARAMETER_PASSWORD         Password used to connect to the SOI Server via FTP
     PARAMETER_RESOURCE         You can specify a resource which is used. This might be useful if 
                                you use or don't use not notification forwarding.
-    PARAMETER_MAX_LEN          You can specify a maximum Length of the Message. All further characters 
-                               will be truncated. Might be usefull if you have an sms gateway behind 
-                               your XMPP Server.
     PARAMETER_SECURITY         Encrypt the client connection and choose which mechanism should be used. 
                                Port is automatically adjusted to 5222 or 5223
     PARAMETER_HOST_MESSAGE     Longtext used in Message if a Hostnotification is raised.
@@ -44,4 +41,5 @@ This is a notificationscript for check_mk monitoring software
 * TLS/SSL not working.
 
 # History
+* 1.1   Added html output in Message and removed max_len Parameter.
 * 1.0   First release.

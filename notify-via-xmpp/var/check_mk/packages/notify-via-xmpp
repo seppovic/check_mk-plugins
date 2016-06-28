@@ -12,7 +12,8 @@
            'pnp-templates': [],
            'web': ['plugins/wato/notify-via-xmpp.py']},
  'name': 'notify-via-xmpp',
+ 'num_files': 2,
  'title': 'notify-via-xmpp',
- 'version': '1.0',
+ 'version': '1.1',
  'version.min_required': '1.2.8p1',
  'version.packaged': '1.2.8p1'}
