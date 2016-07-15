@@ -44,10 +44,10 @@ sub substitute_context {
 		$string =~ s/\$$key\$/$val/gm;
 	}
 	if ($html){
-	    $string =~ s/(UNREACHABLE|DOWN|CRITICAL|CRIT)/<span style='color: #00BB33;'>$1<\/span>/gm;
+	    $string =~ s/(UNREACHABLE|DOWN|CRITICAL|CRIT)/<span style='color: #FF0000;'>$1<\/span>/gm;
 	    $string =~ s/(OK|UP)/<span style='color: #00FF00;'>$1<\/span>/gm;
 	    $string =~ s/(WARNING|WARN)/<span style='color: #FFFFAA;'>$1<\/span>/gm;
-	    $string =~ s/(UNKN|UNKNOWN)/<span style='color: #FFE0A0;'>$1<\/span>/gm;
+	    $string =~ s/(UNKNOWN|UNKN)/<span style='color: #FFE0A0;'>$1<\/span>/gm;
 	}
 
 	warn "D-substiture_context: to: '" . $string . "'" if $debug;

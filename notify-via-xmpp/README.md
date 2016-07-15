@@ -41,5 +41,6 @@ This is a notificationscript for check_mk monitoring software
 * TLS/SSL not working.
 
 # History
+* 1.1.1 Fixed Colour in html output.
 * 1.1   Added html output in Message and removed max_len Parameter.
 * 1.0   First release.
