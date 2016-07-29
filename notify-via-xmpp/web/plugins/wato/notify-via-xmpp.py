@@ -3,7 +3,7 @@
 
 register_notification_parameters("xmpp.pl",
     Dictionary(
-        optional_keys = ["url_prefix", "resource", "chatroom", "security", "max_len", "timeout", "debug"],
+        optional_keys = ["url_prefix", "resource", "chatroom", "security", "timeout", "debug"],
         elements = [
             ( "xmppserver",
               TextAscii(
@@ -57,8 +57,8 @@ Link: $SERVICEURL$
             ( "url_prefix",
               TextAscii(
                   title = _("URL prefix for links to Check_MK"),
-                  help = _("If you specify an URL prefix here, then several parts of the "
-                           "Message can be armed with hyperlinks to your Check_MK GUI, so "
+                  help = _("If you specify an URL prefix here, then $HOSTNAME$ and $SERVICEDESC$ are "
+                           "armed with hyperlinks to your Check_MK GUI, so "
                            "that the recipient Event can directly visit the host or "
                            "service in Check_MK. Specify an absolute URL"),
                   regex = "^(http|https)://.*$",
@@ -93,13 +93,6 @@ Link: $SERVICEURL$
                 True,
                 title = _("Reciepient is a chatroom"),
                 totext = _("If activated, notifications are posted in a chatroom. Make sure that you don't generate multiple Notifications per Alarm."),
-              ),
-            ),
-            ( "max_len",
-              Integer(
-                  title = _("Max Length of the Message"),
-                  help = _("You can specify a maximum Length of the Message. All further characters will be truncated. Might be usefull if you have an sms gateway behind your XMPP Server."),
-                  default_value = 160
               ),
             ),
             ( "timeout",

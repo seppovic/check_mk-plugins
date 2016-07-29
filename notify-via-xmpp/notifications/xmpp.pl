@@ -25,31 +25,53 @@ $SIG{'ALRM'} = sub {
 };
 
 sub substitute_context {
-	my ($string, $pRef, $debug) = @_;
+	my ($string, $pRef, $url_prefix, $html, $debug) = @_;
 	warn "D-substiture_context: substitute the following string: '" . $string . "'" if $debug;
+	if ($html){
+	    if ( $url_prefix ){
+		my $host_url = $url_prefix . $pRef->{HOSTURL};
+		my $service_url = $url_prefix . $pRef->{SERVICEURL};
+
+		$string =~ s/\$HOSTNAME\$/<a href="${host_url}">\$HOSTNAME\$<\/a>/;
+		$string =~ s/\$SERVICEDESC\$/<a href="${service_url}">\$SERVICEDESC\$<\/a>/;
+	    }
+
+	    $string =~ s/\$(.*?)\$/<b>\$$1\$<\/b>/mg;
+	    $string =~ s/\n|\\n/<br\/>\n/g;
+	}
 	foreach my $key (keys %{$pRef}) {
 		my $val = $pRef->{$key};
-		$string =~ s/\$$key\$/$val/m;
+		$string =~ s/\$$key\$/$val/gm;
 	}
-	
+	if ($html){
+	    $string =~ s/(UNREACHABLE|DOWN|CRITICAL|CRIT)/<span style='color: #FF0000;'>$1<\/span>/gm;
+	    $string =~ s/(OK|UP)/<span style='color: #00FF00;'>$1<\/span>/gm;
+	    $string =~ s/(WARNING|WARN)/<span style='color: #FFFFAA;'>$1<\/span>/gm;
+	    $string =~ s/(UNKNOWN|UNKN)/<span style='color: #FFE0A0;'>$1<\/span>/gm;
+	}
+
 	warn "D-substiture_context: to: '" . $string . "'" if $debug;
 	return $string;
 }
 
 
+#~ html message...
 sub construct_message{
-	my ($pRef, $max_len, $url_prefix, $debug) = @_;
-	my $message = '';
+	my ($pRef, $url_prefix, $debug) = @_;
+
+	my $message = "<active xmlns='http://jabber.org/protocol/chatstates'/>\n";
 	if ($pRef->{WHAT} eq "SERVICE"){
-		$message = substitute_context($pRef->{PARAMETER_SERVICE_MESSAGE}, $pRef, $debug);
+		$message .= "<body>". substitute_context($pRef->{PARAMETER_SERVICE_MESSAGE}, $pRef, $url_prefix, undef, $debug) ."</body>\n";
+		$message .= "<html xmlns='http://jabber.org/protocol/xhtml-im'>\n<body xmlns='http://www.w3.org/1999/xhtml'>\n<p>\n";
+		$message .= substitute_context($pRef->{PARAMETER_SERVICE_MESSAGE}, $pRef, $url_prefix, 1, $debug);
 	}else{
-		$message = substitute_context($pRef->{PARAMETER_HOST_MESSAGE}, $pRef, $debug);
+		$message .= "<body>". substitute_context($pRef->{PARAMETER_HOST_MESSAGE}, $pRef, $url_prefix, undef, $debug) ."</body>\n";
+		$message .= "<html xmlns='http://jabber.org/protocol/xhtml-im'>\n<body xmlns='http://www.w3.org/1999/xhtml'>\n<p>\n";
+		$message .= substitute_context($pRef->{PARAMETER_HOST_MESSAGE}, $pRef, $url_prefix, 1, $debug);
 	}
-	if ($max_len){
-		return substr($message, 0, $max_len);
-	}else{
-		return $message;
-	}
+	$message .= "</p>\n</body>\n</html>";
+
+	return $message;
 }
 
 
@@ -59,7 +81,7 @@ sub construct_message{
 #
 sub xmpp_check_result {
     my ($txt, $res, $cnx, $debug)=@_;
-    
+
     if (!defined $res){
     	warn "D-xmpp_check_result: Error '$txt': result undefined. exiting...";
     	exit(2);
@@ -83,7 +105,7 @@ sub xmpp_check_result {
 # xmpp_logout: log out from the xmpp server
 # input: connection
 #
-sub xmpp_logout{ 
+sub xmpp_logout{
 
     # HACK
     # messages may not be received if we log out too quickly...
@@ -113,7 +135,7 @@ sub xmpp_login{
 		componentname	=> $resource,
 		srv				=> 1, # enable SRV lookups
 	};
-	
+
 	if ($security eq "TLS"){
 		$arghash->{tls} = 1;
 		$arghash->{port} = 5222;
@@ -139,100 +161,84 @@ sub xmpp_login{
 			  'password' => $pw,
 			  'resource' => $resource);
     xmpp_check_result('AuthSend', \@res, $cnx, $debug);
-    
+
     return $cnx;
 }
 
-#
-# xmpp_send_message: send a message to some xmpp user
-# input: connection, recipient, msg, debug
-#
-sub xmpp_send_message{
-    my ($cnx, $rcpt, $msg, $debug) = @_;
 
-    $cnx->MessageSend('to'      => $rcpt,
-		'type'		=> 'message',
-		'body'		=> $msg);
-
-    xmpp_check_result('MessageSend', 0, $cnx, $debug);
-}
-
-#
-# xmpp_send_chatroom_message: send a message to a chatroom
-# input: connection, recipient, jid, message, debug 
-#
-sub xmpp_send_chatroom_message{
-    my ($cnx, $rcpt, $jid, $msg, $debug) =  @_;
-
-    # set the presence
+sub xmpp_send {
+    my ($cnx, $rcpt, $user, $msg, $rcpt_is_room, $debug) = @_;
+    # $cnx, $rcpt, $p{PARAMETER_USER}, $message, $rcpt_is_room, $debug
     my $pres = new Net::XMPP::Presence;
-    my $res = $pres->SetTo("$rcpt/$jid");
 
-    $cnx->Send($pres);
+    my $packet = '<message to=\''. $rcpt . '\'';
+    if($rcpt_is_room){
+	$packet .= ' type=\'groupchat\'>';
+	# set the presence
+	my $pres = new Net::XMPP::Presence;
+	my $res = $pres->SetTo("$rcpt/$user");
 
-    # create/send the message
-    my $groupmsg = new Net::XMPP::Message;
-    $groupmsg->SetMessage(to      => $rcpt,
-			  body    => $msg,
-			  type    => 'groupchat');
+	$cnx->Send($pres);
+    } else {
+	$packet .= ' type=\'message\'>';
+    }
+    $packet .= $msg;
+    $packet .= '</message>';
 
-    $res = $cnx->Send($groupmsg);
-    xmpp_check_result ('Send', $res, $cnx, $debug);
+
+    # for some reason, Send does not return anything
+    my $res = $cnx->SendXML($packet);
+    xmpp_check_result('Send', $res, $cnx);
 
     # leave the group
     $pres->SetPresence (Type=>'unavailable', To=>$rcpt);
 }
 
-
 sub main {
-	# Get all NOTIFY_ Variables from Environment and store it in Hash %p
-	my %p = map {$_ =~ /^NOTIFY_(.*)/ ? ($1 => $ENV{$_}) : ()} keys %ENV;
+    # Get all NOTIFY_ Variables from Environment and store it in Hash %p
+    my %p = map {$_ =~ /^NOTIFY_(.*)/ ? ($1 => $ENV{$_}) : ()} keys %ENV;
 
-	
-	# Set defaults:
-	my $debug = $p{PARAMETER_DEBUG} || undef;
-	warn "D-main: xmpp notification handler start, got the following env_vars:\n". Dumper(\%p) if $debug;
-	
-	my $timeout = $p{PARAMETER_TIMEOUT} || 3;
-	
-	# Set alarm to kill the script.
-	warn "D-main: setting Timout for the notification handler - " . $timeout . "s" if $debug;
-	alarm($timeout);
-	
-	# Further defaults:
-	my $url_prefix = $p{PARAMETER_URL_PREFIX} || undef;
-	my $resource = $p{PARAMETER_RESOURCE} || $ENV{OMD_SITE};
-	my $max_len = $p{PARAMETER_MAX_LEN} || undef;
-	my $rcpt_is_room = $p{PARAMETER_CHATROOM} || undef;
-	
-	my $rcpt;
-	if ($p{CONTACT_XMPP}){
-		$rcpt = $p{CONTACT_XMPP}; 
-	}else{
-		warn "no Custom Attribute XMPP for CONTACT found"; 
-		exit(2);
-	}
-	
-	my $security = $p{PARAMETER_SECURITY} || "";
-	
-	
-	# Construct Message and substitute the Variables from WATO
-	my $message = construct_message(\%p, $max_len, $url_prefix, $debug);
-    warn "D-main: constructed the following message to be sent:\n " . $message if $debug;
-	
-	# login to xmpp
-    my $cnx = xmpp_login( $p{PARAMETER_XMPPSERVER}, $p{PARAMETER_USER}, $p{PARAMETER_PASSWORD}, $resource, $security, $debug ); 
-    
-    # send message to recipient or chatroom
-    if ($rcpt_is_room){
-    	xmpp_send_chatroom_message ($cnx, $rcpt, $p{PARAMETER_USER}, $message, $debug);
+
+    # Set defaults:
+    my $debug = $p{PARAMETER_DEBUG} || undef;
+    warn "D-main: xmpp notification handler start, got the following env_vars:\n". Dumper(\%p) if $debug;
+
+    my $timeout = $p{PARAMETER_TIMEOUT} || 3;
+
+    # Set alarm to kill the script.
+    warn "D-main: setting Timout for the notification handler - " . $timeout . "s" if $debug;
+    alarm($timeout);
+
+    # Further defaults:
+    my $url_prefix = $p{PARAMETER_URL_PREFIX} || undef;
+    my $resource = $p{PARAMETER_RESOURCE} || $ENV{OMD_SITE};
+    my $rcpt_is_room = $p{PARAMETER_CHATROOM} || undef;
+
+    my $rcpt;
+    if ($p{CONTACT_XMPP}){
+	    $rcpt = $p{CONTACT_XMPP};
     }else{
-    	xmpp_send_message ($cnx, $rcpt, $message, $debug);
+	    warn "no Custom Attribute XMPP for CONTACT found";
+	    exit(2);
     }
-    
+
+    my $security = $p{PARAMETER_SECURITY} || "";
+
+
+    # Construct Message and substitute the Variables from WATO
+    my $message = construct_message(\%p, $url_prefix, $debug);
+
+    warn "D-main: constructed the following message to be sent:\n " . $message if $debug;
+
+    # login to xmpp
+    my $cnx = xmpp_login( $p{PARAMETER_XMPPSERVER}, $p{PARAMETER_USER}, $p{PARAMETER_PASSWORD}, $resource, $security, $debug );
+
+    # send message to recipient or chatroom
+    xmpp_send ($cnx, $rcpt, $p{PARAMETER_USER}, $message, $rcpt_is_room, $debug);
+
     # logout and exit
     xmpp_logout($cnx, $debug);
-	exit(0);
+    exit(0);
 }
 main();
 exit(0);
@@ -250,41 +256,38 @@ xmpp.pl - sends notifications via xmpp
     it sends notifications via xmpp
 
     All parameters necessary to make this notification handler work
-    are given via Environment Variables prefixed with 
-    /^NOTIFY_.*/ (Notification Context Parameters from cmc), 
-    /^NOTIFY_CONTACT_.*/ (Contact Context, e.g. CustomAttribut) and 
+    are given via Environment Variables prefixed with
+    /^NOTIFY_.*/ (Notification Context Parameters from cmc),
+    /^NOTIFY_CONTACT_.*/ (Contact Context, e.g. CustomAttribut) and
     /^NOTIFY_PARAMETER_.*/ (User supplied Parameters via WATO). A WATO File
     for configuration is present so you don't have to care about the parameters below.
-    
+
     CONTACT_XMPP               The Custom Attribute XMPP is used as recipients jid.
-    
+
     PARAMETER_XMPPSERVER       IP Address or Name of the XMPP Server
     PARAMETER_USER             Username used to connect to the SOI Server via FTP
     PARAMETER_PASSWORD         Password used to connect to the SOI Server via FTP
-    PARAMETER_RESOURCE         You can specify a resource which is used. This might be useful if 
+    PARAMETER_RESOURCE         You can specify a resource which is used. This might be useful if
                                you use or don't use not notification forwarding.
-    PARAMETER_MAX_LEN          You can specify a maximum Length of the Message. All further characters 
-                               will be truncated. Might be usefull if you have an sms gateway behind 
-                               your XMPP Server.
-    PARAMETER_SECURITY         Encrypt the client connection and choose which mechanism should be used. 
+    PARAMETER_SECURITY         Encrypt the client connection and choose which mechanism should be used.
                                Port is automatically adjusted to 5222 or 5223
     PARAMETER_HOST_MESSAGE     Longtext used in Message if a Hostnotification is raised.
     PARAMETER_SERVICE_MESSAGE  Longtext used in Message if a Servicenotificationis raised.
     PARAMETER_URL_PREFIX       to link to the main site if you use distributed Monitoring.
-    PARAMETER_CHATROOM         If activated, notifications are posted in a chatroom. Make sure that you 
-                               don't generate multiple Notifications per Alarm.                      
+    PARAMETER_CHATROOM         If activated, notifications are posted in a chatroom. Make sure that you
+                               don't generate multiple Notifications per Alarm.
     PARAMETER_TIMEOUT          <Timeout> in s; default: 3s
     PARAMETER_DEBUG            prints additional debug messages on STDERR which gets redirected to
                                ~/var/log/notify.log
-    
+
     This parameter may be usfull to test the script from cli:
 
     --help,-h,-?    prints this helpmessage
-    
+
 
 =head1 VERSION
 
-1.0
+1.1
 
 =head1 AUTHOR
 
