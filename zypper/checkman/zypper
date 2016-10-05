@@ -9,7 +9,7 @@ description:
  into the {plugins} directory of your agent.
 
  This plugin extends the zypper check shipped with check_mk. It lets you configure thresholds for
- updates (recommended and security), the maximum duration security updates can be available until a warning or
+ updates (<=SLES11.4 recommended and security; >=SLES12.1 important and critical), the maximum duration security updates can be available until a warning or
  critical state is raised and the status a packagelock should raise.
 
 

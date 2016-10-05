@@ -9,7 +9,7 @@ register_check_parameters(
         elements = [
             ( "recommended",
                 Tuple(
-                    title = _("recommended updates"),
+                    title = _("<=SLES11.4:recommended or >=SLES12.1:important updates"),
                     elements = [
                         Integer(title = _("Warning: "), default_value = 0 ),
                         Integer(title = _("Critical: "), default_value = 0 ),
@@ -18,7 +18,7 @@ register_check_parameters(
             ),
             ( "security",
                 Tuple(
-                    title = _("security updates"),
+                    title = _("<=SLES11.4:security or >=SLES12.1:critical updates"),
                     elements = [
                         Integer(title = _("Warning: "), default_value = 0 ),
                         Integer(title = _("Critical: "), default_value = 0 ),

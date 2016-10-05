@@ -6,8 +6,8 @@
 # Contact: markus.weber@lfst.bayern.de                          #
 # License: GPL                                                  #
 # File: zypper                                                  #
-# Version: 1.0                                                  #
-# Revision: 02.11.2015                                          #
+# Version: 1.2                                                  #
+# Revision: 05.10.2016                                          #
 # Description: This check lets you configure thresholds for     #
 # zypper updates.
 #################################################################
@@ -15,6 +15,7 @@
 
 # Example Output
 #
+# #SLES 11.4
 # <<<zypper:sep(124)>>>
 # 5 patches needed (2 security patches)
 # Updates for openSUSE 12.1 12.1-1.4 | openSUSE-2012-326 | 1       | recommended | needed | Softwarestack update
@@ -25,6 +26,12 @@
 # Updates for openSUSE 12.1 12.1-1.4 | openSUSE-2012-324 | 1       | recommended | needed | util-linux: make mount honor 'noexec' and 'user' option
 # 1 | apache | package | (any)
 # 2 | mysql  | package | (any)
+#
+# #SLES12.1
+# SLES12-SP1-Updates | SUSE-SLE-SERVER-12-SP1-2016-1388 | recommended | low       | ---         | needed | Recommended update for flac
+# SLES12-SP1-Updates | SUSE-SLE-SERVER-12-SP1-2016-1390 | security    | moderate  | ---         | needed | Security update for flex, at,
+# SLES12-SP1-Updates | SUSE-SLE-SERVER-12-SP1-2016-1393 | security    | important | ---         | needed | Security update for openssl
+# SLES12-SP1-Updates | SUSE-SLE-SERVER-12-SP1-2016-1399 | security    | critical  | ---         | needed | Security update for bind
 
 
 ### Parameters 
@@ -50,8 +57,7 @@ def check_zypper(_no_item, params, info):
         return 3, firstline
 
     for line in info:
-        # 5 patches needed (2 security patches)
-        if len(line) >= 5 and line[4].lower().strip() == 'needed':
+        if (len(line) >= 5 and line[4].lower().strip() == 'needed') or (len(line) >= 7 and line[5].lower().strip() == 'needed'):
             patch_type = line[3].strip()
             patch_types.setdefault(patch_type, 0)
             patch_types[patch_type] += 1
@@ -69,7 +75,7 @@ def check_zypper(_no_item, params, info):
 
 #       t = typ "security", "recommended" or anything else we dont care about, c = count
         for t,c in patch_items:
-            if t == "security":
+            if t == "security" or t == "critical":
                 sec_warn, sec_crit = params['security']
                 if c >= sec_crit and sec_crit != 0:
                     sec_marker = '(!!)'
@@ -115,7 +121,7 @@ def check_zypper(_no_item, params, info):
                 else:
                     set_item_state(countername, (this_time, 0))
 
-            elif t == "recommended":
+            elif t == "recommended" or t == "important":
                 rec_warn, rec_crit = params['recommended']
                 if c >= rec_crit and rec_crit != 0:
                     rec_marker = '(!!)'
