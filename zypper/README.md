@@ -17,7 +17,7 @@ status a packagelock should raise.
 # Known issues
 
 # History
-* 1.2   Use new Severity over Category column in >=SLES12SP1
+* 1.2   Use new Severity over Category if present. Thanks to Sven Knauer.
 * 1.1.1 Fixed Bug in WATO, not using named Parameters anymore, makes this plugin usable with check_mk pre 1.2.7
 * 1.1   Updated to 1.2.7i3 api (Note: incompatible with prior check_mk Versions)
 * 1.0   First release (use with check_mk 1.2.7i2 and earlier)
