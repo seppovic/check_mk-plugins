@@ -1,0 +1,16 @@
+title: f5 BIG-IP failover status
+agents: snmp
+catalog: os/misc
+license: GPL
+distribution: seppovic
+author: Markus Weber
+description:
+ In BIG-IP 11.2.0 and later, the F5-BIGIP-SYSTEM-MIB file contains the sysCmFailoverStatusId
+ OID (1.3.6.1.4.1.3375.2.1.14.3.1) that can be queried through SNMP to determine the
+ failover status of a BIG-IP system in a device group
+
+inventory:
+ One service is defined for the failover status
+
+perfdata:
+ the check does not generate performance data.

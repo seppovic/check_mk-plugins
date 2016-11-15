@@ -1,0 +1,68 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+# Agent / MIB output
+# .1.3.6.1.4.1.3375.2.1.14.3.1.0 = INTEGER: 4
+# .1.3.6.1.4.1.3375.2.1.14.3.2.0 = STRING: "ACTIVE"
+# .1.3.6.1.4.1.3375.2.1.14.3.3.0 = INTEGER: 0
+# .1.3.6.1.4.1.3375.2.1.14.3.4.0 = STRING: "1/1 active"
+#
+# Value Failover Status Description
+# 0     unknown         The failover status of the device is unknown
+# 1     offline         The device is offline
+# 2     forcedOffline   The device is forced offline
+# 3     standby         The device is standby
+# 4     active          The device is active
+factory_settings["f5_bigip_failover_default_levels"] = {
+        "discovered_state" : '',
+        "0"   : 3,
+        "1"   : 2,
+        "2"   : 2,
+        "3"   : 1,
+        "4"   : 1,
+}
+
+def inventory_f5_bigip_failover(info):
+    if len(info) == 1:
+        params_dict = { "discovered_state" : info[0][0] }
+        settings = host_extra_conf_merged(g_hostname, [])
+        params_dict["0"] = settings.get('0', 3)
+        params_dict["1"] = settings.get('1', 2)
+        params_dict["2"] = settings.get('2', 2)
+        params_dict["3"] = settings.get('3', 1)
+        params_dict["4"] = settings.get('4', 1)
+        return [(None, params_dict)]
+
+
+def check_f5_bigip_failover(_no_item, params, info):
+    state_names = {
+        "0"   : "The failover status of the device is unknown",
+        "1"   : "The device is offline",
+        "2"   : "The device is forced offline",
+        "3"   : "The device is standby",
+        "4"   : "The device is active",
+    }
+
+    statusid, statustxt = info[0]
+    if statusid != params["discovered_state"]:
+        cmkstate = params[statusid]
+        return cmkstate, "%s - Device change from \"%s\" to \"%s\"" % (statustxt, state_names[params["discovered_state"]], state_names[statusid] )
+    else:
+        return 0, "Failoverstate not changed (%s)" % state_names[statusid]
+
+
+check_info["f5_bigip_failover"] = {
+    'group'                   : 'f5_bigip_failover',
+    'check_function'          : check_f5_bigip_failover,
+    'inventory_function'      : inventory_f5_bigip_failover,
+    'service_description'     : 'Failover status',
+    "default_levels_variable" : "f5_bigip_failover_default_levels",
+    'snmp_info'               : ('.1.3.6.1.4.1.3375.2.1.14.3', [
+        "1.0", # sysCmFailoverStatusId
+        "2.0", # sysCmFailoverStatusStatus
+    ]),
+    'snmp_scan_function'      : \
+     lambda oid: '.1.3.6.1.4.1.3375.2' in oid(".1.3.6.1.2.1.1.2.0") \
+        and "big-ip" in oid(".1.3.6.1.4.1.3375.2.1.4.1.0").lower() \
+    and int(oid(".1.3.6.1.4.1.3375.2.1.4.2.0").split('.')[0]) >= 11,
+}

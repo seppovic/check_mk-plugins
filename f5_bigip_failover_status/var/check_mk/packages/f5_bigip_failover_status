@@ -1,0 +1,12 @@
+{'author': u'Markus Weber',
+ 'description': u'In BIG-IP 11.2.0 and later, the F5-BIGIP-SYSTEM-MIB file contains the sysCmFailoverStatusId OID (1.3.6.1.4.1.3375.2.1.14.3.1) that can be queried through SNMP to determine the failover status of a BIG-IP system in a device group. see https://support.f5.com/kb/en-us/solutions/public/14000/300/sol14399.html\n\n',
+ 'download_url': 'https://github.com/seppovic/check_mk-plugins/tree/master/f5_bigip_failover_status',
+ 'files': {'checkman': ['f5_bigip_failover'],
+           'checks': ['f5_bigip_failover'],
+           'web': ['plugins/wato/check_parameters_f5_bigip_failover.py']},
+ 'name': 'f5_bigip_failover_status',
+ 'num_files': 3,
+ 'title': u'f5_bigip_failover_status',
+ 'version': '1.0.1',
+ 'version.min_required': '1.2.8',
+ 'version.packaged': '1.2.8p12'}
