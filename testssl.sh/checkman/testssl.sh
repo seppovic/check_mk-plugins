@@ -1,10 +1,10 @@
-title: sslyze
+title: testssl.sh
 agents: active
 catalog: agentless
 distribution: seppovic
 license: GPL
 description:
- This plugin utilzes **sslyze** to check ssl/tls configuration of a given service against a couple
+ This plugin utilzes **testssl.sh** to check ssl/tls configuration of a given service against a couple
  of predefined tests like:
  * Heartbleed vulnerability
  * Http Headers (HSTS, HPKP)
