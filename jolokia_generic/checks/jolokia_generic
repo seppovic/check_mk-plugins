@@ -99,7 +99,7 @@ def check_jolokia_generic(item, params, info):
         workitems.append(key.split('.')[-1])
 
     if not workitems:
-        raise MKCounterWrapped(None, "Service is stale, found no data for: %s " % item)
+        raise MKCounterWrapped("Service is stale, found no data for: %s " % (item))
 
     if workmodes[0] == 'gauge':
         for i in range(len(workitems)):
