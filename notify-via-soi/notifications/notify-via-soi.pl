@@ -465,7 +465,7 @@ soi-connector.pl - Forward Notifications to CA-SOI
 
 =head1 VERSION
 
-1.1
+1.1.1
 
 =head1 AUTHOR
 
