@@ -287,7 +287,7 @@ xmpp.pl - sends notifications via xmpp
 
 =head1 VERSION
 
-1.1
+1.1.2
 
 =head1 AUTHOR
 

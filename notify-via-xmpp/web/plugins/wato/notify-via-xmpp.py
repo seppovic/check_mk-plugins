@@ -66,7 +66,7 @@ Link: $SERVICEURL$
                                   "<tt>https</tt>"),
                   size = 64,
                   default_value = "http://" + socket.gethostname() + "/" + (
-                          defaults.omd_site and defaults.omd_site or "xmpp-resource"),
+                          config.omd_site() and config.omd_site() or "xmpp-resource"),
               ),
             ),
             ( "security",
@@ -85,7 +85,7 @@ Link: $SERVICEURL$
                   title = _("XMPP Resource"),
                   help = _("You can specify a resource which is used. This might be useful if you use or don't use not notification forwarding."),
                   size = 64,
-                  default_value = defaults.omd_site and defaults.omd_site or "",
+                  default_value = config.omd_site() and config.omd_site() or "",
               ),
             ),
             ( "chatroom",

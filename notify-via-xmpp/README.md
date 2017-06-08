@@ -29,8 +29,8 @@ This is a notificationscript for check_mk monitoring software
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/notify-via-xmpp/notify-via-xmpp-1.1.1.mkp'
-* OMD[SITENAME]:~$ check_mk -P install notify-via-xmpp-1.1.1.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/notify-via-xmpp/notify-via-xmpp-1.1.2.mkp'
+* OMD[SITENAME]:~$ check_mk -P install notify-via-xmpp-1.1.2.mkp
 
 # Requirements
 * xmpp Server
@@ -41,6 +41,7 @@ This is a notificationscript for check_mk monitoring software
 * TLS/SSL not working.
 
 # History
+* 1.1.2 Fixed compatibility with check_mk 1.4.0
 * 1.1.1 Fixed Colour in html output.
 * 1.1   Added html output in Message and removed max_len Parameter.
 * 1.0   First release.
