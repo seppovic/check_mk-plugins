@@ -1,0 +1,12 @@
+title: Collect NFS performance data
+agents: linux
+catalog: os/storage
+distribution: https://mathias-kettner.de/check_mk_exchange.php
+author: Matthias Henze <matthias@mhcsoftware.de>
+license: GPL
+description:
+ This check monitors performance of NFS mounts on client systems.
+ It reads /proc/self/mountstats and extracts NFS data. Currently
+ bytes read and written and miliseconds requiered to complete a request are monitored.
+
+ For details about the data see: https://utcc.utoronto.ca/~cks/space/blog/linux/NFSMountstatsIndex

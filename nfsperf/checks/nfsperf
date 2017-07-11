@@ -1,0 +1,126 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+# Esample output:
+#
+#<<<<nfsperf>>>>
+# nas01:/volume1/X 8338171623 0 0 0 9921421733 0 2422243 0 131382 1243156 0 0 296 11496 1255156 0 0 8371 0 3570 748 0 88 0 0 88 0 0 0 0 0 0 0 0 0 76729 76729 0 12276640 9931243080 1592 1183987 1187987 0 0 0 0 0 0 0 0
+
+# Fields:
+#
+# Fields marked with a * are currently used. Any other may be used in a futher Version
+#
+# 0 Mount
+#
+# 1 - 27 events:  https://utcc.utoronto.ca/~cks/space/blog/linux/NFSMountstatsBytesEvents
+#
+#  1 inode revalidate
+#  2 dnode revalidate
+#  3 data invalidate
+#  4 attribute invalidate
+#  5 vfs open
+#  6 vfs lookup
+#  7 vfs access
+#  8 vfs update page
+#  9 vfs read page
+# 10 vfs read pages
+# 11 vfs write page
+# 12 vfs write pages
+# 13 vfs getdents
+# 14 vfs setattr
+# 15 vfs flush
+# 16 vfs fsync
+# 17 vfs lock
+# 18 vfs file release
+# 19 congestion wait
+# 20 truncation
+# 21 write extension
+# 22 silly rename
+# 23 short read
+# 24 short write
+# 25 jukebox delay
+# 26 pnfs read
+# 27 pnfs write
+#
+# 28 - 35 bytes: https://utcc.utoronto.ca/~cks/space/blog/linux/NFSMountstatsBytesEvents
+#
+# 28 nread
+# 29 nwrite
+# 30 dread
+# 31 dwrite
+# 32 nfsread
+# 33 nfswrite
+# 34 pageread
+# 35 pagewrite
+#
+# 36 - 43 READ: https://utcc.utoronto.ca/~cks/space/blog/linux/NFSMountstatsNFSOps
+#
+# 36  operations
+# 37  transmissions
+# 38  major timeouts
+# 39* bytes sent
+# 40* bytes received
+# 41  cumulative queue time
+# 42  cumulative response time
+# 43* cumulative total request time
+#
+# 44 - 51 WRITE: https://utcc.utoronto.ca/~cks/space/blog/linux/NFSMountstatsNFSOps
+#
+# 44  operations
+# 45  transmissions
+# 46  major timeouts
+# 47* bytes sent
+# 48* bytes received
+# 49  cumulative queue time
+# 50  cumulative response time
+# 51* cumulative total request time
+
+
+
+
+def inventory_nfsperf_status(info):
+   for line in info:
+      yield line[0], None
+
+
+def check_nfsperf_status(item, _no_params, info):
+   for line in info:
+      if line[0] == item:
+         wrapped = False
+         this_time = time.time()
+         perfdata = []
+         name = item.replace(".","")
+         name = name.replace("/","")
+         name = name.replace(":","")
+
+         rate = get_rate("readtx", this_time, saveint(line[39]), allow_negative=False, onwrap=SKIP)
+         perfdata.append( ("readtx",rate) )
+
+         rate = get_rate("readrx", this_time, saveint(line[40]), allow_negative=False, onwrap=SKIP)
+         perfdata.append( ("readrx",rate) )
+
+
+         rate = get_rate("writetx", this_time, saveint(line[47]), allow_negative=False, onwrap=SKIP)
+         perfdata.append( ("writetx",rate) )
+
+         rate = get_rate("writerx", this_time, saveint(line[48]), allow_negative=False, onwrap=SKIP)
+         perfdata.append( ("writerx",rate) )
+
+
+         rate = get_rate("rtime", this_time, saveint(line[43]), allow_negative=False, onwrap=SKIP)
+         perfdata.append( ("rtime",rate) )
+
+         rate = get_rate("wtime", this_time, saveint(line[51]), allow_negative=False, onwrap=SKIP)
+         perfdata.append( ("wtime",rate) )
+
+         return 0, "NFS performance for: %s" % (item), perfdata
+
+
+check_info["nfsperf"] = {
+    'check_function':          check_nfsperf_status,
+    'inventory_function':      inventory_nfsperf_status,
+    'service_description':     'NFS performance %s',
+    "has_perfdata"            : True,
+    "group"                   : "filesystem",
+    "default_levels_variable" : "filesystem_default_levels",
+}
