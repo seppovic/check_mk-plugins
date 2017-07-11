@@ -34,8 +34,8 @@ If at least one device in the **btrfs fi show** output is fully utilised like th
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/df_btrfs/df_btrfs-1.0.3.mkp'
-* OMD[SITENAME]:~$ check_mk -P install df_btrfs-1.0.3.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/df_btrfs/df_btrfs-1.0.7.mkp'
+* OMD[SITENAME]:~$ check_mk -P install df_btrfs-1.0.7.mkp
 
 # Requirements
 * A check_mk_agent patched with this patch:
@@ -48,6 +48,7 @@ If at least one device in the **btrfs fi show** output is fully utilised like th
 # Known issues
 
 # History
+* 1.0.7 Fixed few bugs, added metadata graph.
 * 1.0.3 Fixed Bug in WATO, not using named Parameters anymore, makes this plugin usable with check_mk pre 1.2.7
 * 1.0.2 Fixed Bug initialised variable to avoid Errors and fixed root reserve calculation
 * 1.0.1 Fixed Bug in conversion function
