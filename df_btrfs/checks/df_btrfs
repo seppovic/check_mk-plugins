@@ -187,6 +187,10 @@ def check_btrfs(item, params, info):
     fslist = []
     btrfs_ret = [ 0 ]
     output_append = ''
+    btrfs_perf = []
+    meta_crit = 0.7
+    meta_warn = 0.65
+    perf_meta = 0.0
 
     parsed = parse_df_btrfs(info)
 
@@ -209,30 +213,33 @@ def check_btrfs(item, params, info):
                 # check Metadata usage
                 if key.startswith('Metadata'):
                     if val['used'] < 1:
-                        per = 0.0
+                        perf_meta = 0.0
                     else:
-                        per = float(val['used'] / val['total'])
+                        perf_meta = float(val['used'] / val['total'])
 
-                    if per > 0.75:
+                    if perf_meta > meta_crit:
                         metadatausage = 2
-                    elif per > 0.73:
+                    elif perf_meta > meta_warn:
                         metadatausage = 1
+                    btrfs_perf.append(("btrfs_metadata", str(val['used']) + "MB", val['total'] * meta_warn, val['total'] * meta_crit, 0, val['total']))
+
                 # check space allocation of filesystem
                 if key == 'dev':
                     for dev, data in val.items():
-                        if data['total'] == data['allocated']:
+                        if float(data['allocated'] / data['total']) > 0.5:
                             utilised = 1
 
             if utilised == 1 and metadatausage == 2:
                 btrfs_ret.append(2)
-                output_append += ", Btrfs has allocated all of the device space and Metadata are close to full (!!) you should start a balance run to avoid - No space left on device - errors"
+                output_append += (", Btrfs Metadata are close to full %0.2f") % (perf_meta * 100) + "% (!!) you should start a balance run to avoid - No space left on device - errors"
             elif utilised == 1 and metadatausage == 1:
                 btrfs_ret.append(1)
-                output_append += ", Btrfs has allocated almost all of the device space and Metadata are close to full (!) you should start a balance run to avoid - No space left on device - errors"
+                output_append += (", Btrfs Metadata are close to full %0.2f") % (perf_meta * 100) + "% (!) you should start a balance run to avoid - No space left on device - errors"
 
     # out of loop, we finally check the filesystem with function from df.include
     # and merge with our btrfs stats
     (df_ret, output, perf) = df_check_filesystem_list(item, params, fslist)
+    perf = perf + btrfs_perf
     if max(btrfs_ret) > df_ret:
         ret = max(btrfs_ret)
     else:
@@ -243,8 +250,8 @@ def check_btrfs(item, params, info):
 
 
 check_info['df_btrfs'] = {
-    "check_function"          : check_btrfs,
     "inventory_function"      : inventory_btrfs,
+    "check_function"          : check_btrfs,
     "service_description"     : "Filesystem %s",
     "has_perfdata"            : True,
     "group"                   : "filesystem",
