@@ -21,8 +21,8 @@ Notification script to forward notifications to CA-SOI.
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/notify-via-soi/notify-via-soi-1.1.1.mkp'
-* OMD[SITENAME]:~$ check_mk -P install notify-via-soi-1.1.1.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/notify-via-soi/notify-via-soi-1.3.mkp'
+* OMD[SITENAME]:~$ check_mk -P install notify-via-soi-1.3.mkp
 
 # Requirements
 * CA-SOI (obviously)
@@ -31,6 +31,7 @@ Notification script to forward notifications to CA-SOI.
 # Known issues
 
 # History
+* 1.3   added a lot of testing dokumentation to POD and made livestatus query more robust.
 * 1.1.1 updated to check_mk 1.4.0 compatibility.
 * 1.1   added WATO file, fixed several Bugs.
 * 1.0   First release.

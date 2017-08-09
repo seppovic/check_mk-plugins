@@ -85,7 +85,7 @@ $LONGSERVICEOUTPUT$
                                   "<tt>https</tt>"),
                   size = 64,
                   default_value = "http://" + socket.gethostname() + "/" + (
-                          config.omd_site() and config.omd_site() or ""),
+                          defaults.omd_site and defaults.omd_site or ""),
               )
             ),
             ( "timeout",

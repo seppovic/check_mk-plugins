@@ -7,7 +7,8 @@
 use v5.10;
 use strict;
 use warnings;
-use Getopt::Long 'HelpMessage';
+use Getopt::Long;
+use Pod::Usage;
 use Data::Dumper;
 use Net::FTP;
 use Carp;
@@ -19,8 +20,12 @@ use Monitoring::Livestatus;
 # END INCLUDES #########################################################
 
 # parameters
-GetOptions('help' => sub {HelpMessage(1)}) or HelpMessage(1);
-HelpMessage(1) if $ARGV[0];
+GetOptions(
+	'help|h|?' => sub {pod2usage(-verbose => 99, -sections => 'NAME|SYNOPSIS|DESCRIPTION|OPTIONS|ARGUMENTS|VERSION')},
+	'noFTPUpload'    => \(our $noFTPUpload = 0),
+	'showTestGuide'  => sub{pod2usage(-verbose => 99, -sections => 'SEE ALSO')},
+) or pod2usage(1);
+pod2usage(1) if $ARGV[0];
 
 # Just in case of problems, let's not hang check_mk
 $SIG{'ALRM'} = sub {
@@ -35,8 +40,8 @@ our %p = map {$_ =~ /^NOTIFY_(.*)/ ? ($1 => $ENV{$_}) : ()} keys %ENV;
 $p{PARAMETER_TIMEOUT} = $p{PARAMETER_TIMEOUT} || 3;
 
 my $time = Time::HiRes::gettimeofday;
-our $TIMESTAMP = strftime('T%Y-%m-%d %H:%M:%S+02:00', localtime($time));
-our $FILENAME = strftime('T%Y%m%d_%H%M%S_', localtime($time)) . sprintf("%03i.xml", (($time * 1000) % 1000));
+our $TIMESTAMP = strftime('%Y-%m-%dT%H:%M:%S+02:00', localtime($time));
+our $FILENAME  = strftime('T%Y%m%d_%H%M%S_', localtime($time)) . sprintf("%03i.xml", (($time * 1000) % 1000));
 
 sub _substitute_context {
 	my ($string) = @_;
@@ -127,11 +132,11 @@ sub livestatus {
 
 
 	my $live =
-	  Monitoring::Livestatus->new(peer => \@livesockets, query_timeout => $p{PARAMETER_TIMEOUT} - 1, verbose => 0);
+	  Monitoring::Livestatus->new(peer => \@livesockets, query_timeout => $p{PARAMETER_TIMEOUT} - 1, verbose => 0, use_threads => 0);
 	$live->errors_are_fatal(0);
 	my $vars = $live->selectall_arrayref($query);
 	if ($Monitoring::Livestatus::ErrorCode) {
-		croak '' . $Monitoring::Livestatus::ErrorMessage;
+		croak 'D-livestatus: ' . $Monitoring::Livestatus::ErrorMessage;
 	}
 	warn "D-livestatus: ...and got this answer:" . Dumper($vars) if $p{PARAMETER_DEBUG};
 
@@ -394,16 +399,21 @@ sub main {
 	  _get_xml($ALARMID, $SEVERITY, $HEADLINE, $HOSTNAME, $HOSTTYPE, $RESOURCENAME, $RESOURCETYPE, $ALERTTEXT);
 	warn "D-main: Tempxml: " . $tmp_file . "'" if $p{PARAMETER_DEBUG};
 
-	warn "D-main: starting ftp upload to: 'ftp://" . $p{PARAMETER_SOISERVER} . $p{PARAMETER_FTPPATH} . "'" if $p{PARAMETER_DEBUG};
-	my $ftp;
-	$ftp = Net::FTP->new($p{PARAMETER_SOISERVER})
-	  || croak "unable to create ftp connection to '$p{PARAMETER_SOISERVER}'" . $ftp->message;
-	$ftp->login($p{PARAMETER_FTPUSER}, $p{PARAMETER_FTPPASSWORD})
-	  || croak "unable to connect as '$p{PARAMETER_FTPUSER}'" . $ftp->message;
-	$ftp->cwd($p{PARAMETER_FTPPATH}) || croak "unable to change to path '$p{PARAMETER_FTPPATH}'" . $ftp->message;
-	$ftp->put($xml_fh, $FILENAME) || croak "unable to transfer file '$FILENAME'" . $ftp->message;
-	$ftp->quit;
-	warn "D-main: ftp upload successful. exiting" if $p{PARAMETER_DEBUG};
+	if ( $noFTPUpload ){
+		warn "D-main: skipping ftp upload, you requested to not upload the xml." if $p{PARAMETER_DEBUG};
+	} else {
+		warn "D-main: starting ftp upload to: 'ftp://" . $p{PARAMETER_SOISERVER} . $p{PARAMETER_FTPPATH} . "'" if $p{PARAMETER_DEBUG};
+		my $ftp;
+		$ftp = Net::FTP->new($p{PARAMETER_SOISERVER})
+		  || croak "unable to create ftp connection to '$p{PARAMETER_SOISERVER}'" . $ftp->message;
+		$ftp->login($p{PARAMETER_FTPUSER}, $p{PARAMETER_FTPPASSWORD})
+		  || croak "unable to connect as '$p{PARAMETER_FTPUSER}'" . $ftp->message;
+		$ftp->cwd($p{PARAMETER_FTPPATH}) || croak "unable to change to path '$p{PARAMETER_FTPPATH}'" . $ftp->message;
+		$ftp->put($xml_fh, $FILENAME) || croak "unable to transfer file '$FILENAME'" . $ftp->message;
+		$ftp->quit;
+		warn "D-main: ftp upload successful. exiting" if $p{PARAMETER_DEBUG};
+
+	}
 }
 main();
 exit(0);
@@ -413,7 +423,7 @@ exit(0);
 
 =head1 NAME
 
-soi-connector.pl - Forward Notifications to CA-SOI
+notify-via-soi.pl - Forward Notifications to CA-SOI
 
 =head1 SYNOPSIS
     This is a notificationscript for check_mk monitoring software
@@ -461,11 +471,80 @@ soi-connector.pl - Forward Notifications to CA-SOI
     This parameter may be usfull to test the script from cli:
 
     --help,-h,-?    prints this helpmessage
+    --noFTPUpload   skips the final step, uploading the xml to the FTP
+    --showTestGuide prints detailed instructios on how to test the skript.
     
+=head1 SEE ALSO
+
+  Um das Skript zu testen sind folgende Schritte nötig
+  Voraussetzungen:
+  - das Skript muss mit dem/einen site Benutzer ausgeführt werden.
+  - die environment Variablen müssen gesetzt werden z.B. so für ein Beispiel Critical Meldung 
+
+  $ cat <<'EOF' >/tmp/notify-via-soi.cirt.env
+  export NOTIFY_HOSTNAME='<HOSTNAME EINES AUF DER SITE ÜBERWACHTEN HOSTS>'
+  # z.B. export NOTIFY_HOSTNAME='X9350657'
+  export NOTIFY_SERVICEDESC='<BELIEBIGER SERVICE DES HOSTS>'
+  # z.B. export NOTIFY_SERVICEDESC='fs_/tmp'
+  export NOTIFY_SERVICECHECKCOMMAND='check_mk-df'
+  export NOTIFY_SERVICEOUTPUT='test'
+  export NOTIFY_PREVIOUSSERVICEHARDSTATEID='0'
+  export NOTIFY_NOTIFICATIONTYPE='PROBLEM'
+  export NOTIFY_SERVICEURL='/check_mk/index.py?start_url=view.py%3Fview_name%3Dservice%26host%3DX9350657%26service%3Dfs_/tmp'
+  export NOTIFY_PARAMETER_URL_PREFIX='http://10.233.22.135/rzn_zentral'
+  export NOTIFY_PARAMETER_FTPPASSWORD='prod#1234'
+  export NOTIFY_PARAMETER_TIMEOUT='3'
+  export NOTIFY_PARAMETER_SOISERVER='10.233.22.27'
+  export NOTIFY_PARAMETER_SERVICEHEADLINE='$HOSTNAME$ ($HOSTALIAS$ - $HOSTADDRESS$) - $SERVICEDESC$'
+  export NOTIFY_PARAMETER_FTPPATH='/in'
+  export NOTIFY_PARAMETER_DEBUG='yes'
+  export NOTIFY_PARAMETER_HOSTHEADLINE='$HOSTNAME$ ($HOSTALIAS$ - $HOSTADDRESS$) - $HOSTSTATE$'
+  export NOTIFY_PARAMETER_FTPUSER='FTP-Nagios'
+  export NOTIFY_PARAMETER_HOSTBODY='$HOSTOUTPUT$ bla blub'
+  export NOTIFY_PARAMETER_SERVICEBODY='Service:  $SERVICEDESC$'
+  export NOTIFY_WHAT='SERVICE'
+  EOF
+
+  $ source /tmp/notify-via-soi.cirt.env
+
+  - oder so für eine Beispiel OK Meldung
+
+  $ cat <<'EOF' >/tmp/notify-via-soi.ok.env
+  export NOTIFY_HOSTNAME='<HOSTNAME EINES AUF DER SITE ÜBERWACHTEN HOSTS>'
+  # z.B. export NOTIFY_HOSTNAME='X9350657'
+  export NOTIFY_SERVICEDESC='<BELIEBIGER SERVICE DES HOSTS>'
+  # z.B. export NOTIFY_SERVICEDESC='fs_/tmp'
+  export NOTIFY_SERVICECHECKCOMMAND='check_mk-df'
+  export NOTIFY_SERVICEOUTPUT='test'
+  export NOTIFY_PREVIOUSSERVICEHARDSTATEID='2'
+  export NOTIFY_NOTIFICATIONTYPE='RECOVERY'
+  export NOTIFY_SERVICEURL='/check_mk/index.py?start_url=view.py%3Fview_name%3Dservice%26host%3DX9350657%26service%3Dfs_/tmp'
+  export NOTIFY_PARAMETER_URL_PREFIX='http://10.233.22.135/rzn_zentral'
+  export NOTIFY_PARAMETER_FTPPASSWORD='prod#1234'
+  export NOTIFY_PARAMETER_TIMEOUT='3'
+  export NOTIFY_PARAMETER_SOISERVER='10.233.22.27'
+  export NOTIFY_PARAMETER_SERVICEHEADLINE='$HOSTNAME$ ($HOSTALIAS$ - $HOSTADDRESS$) - $SERVICEDESC$'
+  export NOTIFY_PARAMETER_FTPPATH='/in'
+  export NOTIFY_PARAMETER_DEBUG='yes'
+  export NOTIFY_PARAMETER_HOSTHEADLINE='$HOSTNAME$ ($HOSTALIAS$ - $HOSTADDRESS$) - $HOSTSTATE$'
+  export NOTIFY_PARAMETER_FTPUSER='FTP-Nagios'
+  export NOTIFY_PARAMETER_HOSTBODY='$HOSTOUTPUT$ bla blub'
+  export NOTIFY_PARAMETER_SERVICEBODY='Service:  $SERVICEDESC$'
+  export NOTIFY_WHAT='SERVICE'
+  EOF
+
+  $ source /tmp/notify-via-soi.ok.env
+
+  - Danach kann das skript gestartet werden:
+  $ ~/local/share/check_mk/notifications/notify-via-soi.pl --help
+  $ ~/local/share/check_mk/notifications/notify-via-soi.pl --noFTPUpload
+  
+  - nach dem Ausführen mit dem crit Environment muss auf dem entspr. Service in der check_mk GUI ein Kommentar erscheinen
+  - nach dem Ausführen mit dem OK Environment müssen alle Kommentare des Service in der check_mk GUI wieder verschwunden sein.
 
 =head1 VERSION
 
-1.1.1
+1.3
 
 =head1 AUTHOR
 
