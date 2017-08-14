@@ -15,7 +15,7 @@ use DateTime;
 use DateTime::Duration;
 ########################################################################
 ########################################################################
-say "<<<omd-sane-cleanup>>>";
+say "<<<omd-sane-cleanup:sep(124)>>>";
 
 
 #
@@ -46,7 +46,7 @@ sub get_Config {
 # Message, if $Code != 0
 sub _exit{
 	my ($Code, $str) = @_;
-	print "ERROR: " if $Code != 0;
+	print "ERROR| " if $Code != 0;
 	say $str ."";
 	exit($Code);
 	
@@ -60,21 +60,9 @@ sub _exit{
 sub clean_FilesByDate {
 	my ($type, @files) = @_;
 	
-	my $str = '';
-	if ( $type eq 'days' ) { 
-		$str = 'filesPerDay';
-	} elsif ( $type eq 'months' ) {
-		$str = 'daysPerMonth';
-	} elsif ( $type eq 'years' ) {
-		$str = 'MonthsPerYear';
-	} else { 
-		croak 'Cant translate Parameter "type"';
-	}
-	say STDERR "_clean_FilesByDate: ...got: ". Dumper(\$type, \$files[0]) .'(...trunked the files)' if $main::debug >=2;
 	#
 	# push files to a datastructure that fits our needs
-	# Array of Arrays, containing: indices are the $type ago, the content is an Array of filenames
-	
+	# Array of Arrays, containing: indices are the $type ago, the content is an Array of filenames	
 	# @structuredFiles = (
 	#	# 0 - Today(, this Month, this Year)
 	#	  [
@@ -88,40 +76,85 @@ sub clean_FilesByDate {
 	#	  [ ... ]
 	#	...
 	# )
-	my @structuredFiles = ();
+	my $structuredFiles = [];
+	my $filesToSkip = 0;
+	say STDERR "_clean_FilesByDate: ...got: ". Dumper(\$type, \$files[0]) .'(...trunked the files)' if $main::debug >=1;
+	
+	if ( $type eq 'filesPerDay' ) {
+		$filesToSkip = $main::conf->{'filesPerDay'};
+	} elsif ( $type eq 'daysPerMonth' ) {
+		$filesToSkip = $main::conf->{'filesPerDay'} * $main::conf->{'daysPerMonth'};
+	} elsif ( $type eq 'MonthsPerYear') {
+		$filesToSkip = $main::conf->{'filesPerDay'} * $main::conf->{'daysPerMonth'} * $main::conf->{'MonthsPerYear'};
+	} elsif ($type eq 'maxYears') {
+		$filesToSkip = $main::conf->{'filesPerDay'} * $main::conf->{'daysPerMonth'} * $main::conf->{'MonthsPerYear'} * $main::conf->{'maxYears'};
+	} else {
+		croak "unknown type: ". $type;
+	}
+		
 	for my $file ( @files ) {
 		my $fileTime = DateTime->from_epoch(epoch => $file);
-		#print STDERR '_cleanFilesByDate: ...fileTime: '. $fileTime if $main::debug >=3;
+		$fileTime->set_time_zone('UTC');
 		my $delta;
-		if ( $type eq 'days' ) {
-			$delta = int($main::now->delta_days($fileTime)->in_units($type));
-		} elsif ( $type eq 'months' ) {
+		if ( $type eq 'filesPerDay' ) {
+			$delta = int($main::now->delta_days($fileTime)->in_units('days'));
+			push @{$structuredFiles->[$delta]}, $file;
+		} elsif ( $type eq 'daysPerMonth' ) {
 			$delta = int($main::now->subtract_datetime($fileTime)->delta_months());
-		} else {
+			push @{$structuredFiles->[$delta]}, $file;
+		} elsif ( $type eq 'MonthsPerYear') {
 			$delta = int(($main::now->subtract_datetime($fileTime)->delta_months() ) / 12);
+			push @{$structuredFiles->[$delta]}, $file;
+		} elsif ($type eq 'maxYears') {
+			push @{$structuredFiles->[0]}, $file;
+		} else {
+			croak "unknown type: ". $type;
 		}
-		#say STDERR ' with delta: '. $delta;
-		push @{$structuredFiles[$delta]}, $file;
 	}
-	say STDERR "_clean_FilesByDate: ...generated datastructure for easier filtering. First Element:".
-	           "       ". Dumper($structuredFiles[0]) if $main::debug >=2;
-	say STDERR "                    ... rest: ". Dumper(\@structuredFiles) if $main::debug >=3;
-	say STDERR '_clean_FilesByDate: ...sorting by Date, removing all except last '. $main::conf->{$str} .' files ($conf->{'. $str .'})' if $main::debug >=3;
 	
+	if ( $type eq 'filesPerDay' ) {
+		say STDERR "_clean_FilesByDate: ...generated datastructure for easier filtering. First Element:".
+	    "                    ". Dumper($structuredFiles->[0]) if $main::debug >=1;
+		say STDERR "                    ...rest: ". Dumper($structuredFiles) if $main::debug >=2;
+		say STDERR '                    ...sorting by Date, removing all except last '. 
+	    $filesToSkip .' files ('. $main::conf->{'filesPerDay'} .')' if $main::debug >=1;
+	} elsif ( $type eq 'daysPerMonth' ) {    
+	    say STDERR "_clean_FilesByDate: ...generated datastructure for easier filtering. First Element:".
+           "                    ". Dumper($structuredFiles->[0]) if $main::debug >=1;
+		say STDERR "                    ...rest: ". Dumper($structuredFiles) if $main::debug >=2;
+		say STDERR '                    ...sorting by Date, removing all except last '. 
+        $filesToSkip .' files ('. $main::conf->{'filesPerDay'} .' * '. $main::conf->{'daysPerMonth'} .')' if $main::debug >=1;
+	} elsif ( $type eq 'MonthsPerYear') {
+		say STDERR "_clean_FilesByDate: ...generated datastructure for easier filtering. First Element:".
+           "                    ". Dumper($structuredFiles->[0]) if $main::debug >=1;
+		say STDERR "                    ...rest: ". Dumper($structuredFiles) if $main::debug >=2;
+		say STDERR '                    ...sorting by Date, removing all except last '. 
+        $filesToSkip .' files ('. $main::conf->{'filesPerDay'} .' * '. $main::conf->{'daysPerMonth'} .' * '. $main::conf->{'MonthsPerYear'} .')' if $main::debug >=1;
+	} elsif ($type eq 'maxYears') {
+		say STDERR "_clean_FilesByDate: ...generated datastructure for easier filtering. First Element:".
+           "                    ". Dumper($structuredFiles->[0]) if $main::debug >=1;
+		say STDERR "                    ...rest: ". Dumper($structuredFiles) if $main::debug >=2;
+		say STDERR '                    ...sorting by Date, removing all except last '. 
+        $filesToSkip .' files ('. $main::conf->{'filesPerDay'} .' * '. $main::conf->{'daysPerMonth'} .' * '. $main::conf->{'MonthsPerYear'} .' * '. $main::conf->{'maxYears'} .')' if $main::debug >=1;
+	}
+	
+	my @ret;
 	my $i = 0;
-	for my $arrRef ( @structuredFiles ) {
+	for my $arrRef ( @{$structuredFiles} ) {
 		next unless defined $arrRef;
     	@{$arrRef} =  sort { $a <=> $b } @{$arrRef};
     	
-    	say STDERR '_clean_FilesByDate: ...sorted: '. Dumper($arrRef) if $main::debug >=3 and $i == 0; 
-		for ( my $var = 0 ; $var < ($main::conf->{$str}) && scalar @{$arrRef} != 0 ; $var++ ) {
+		say STDERR '_clean_FilesByDate: ...sorted $structuredFiles['. $i .']: '. Dumper($arrRef) if $main::debug >=1 and $i == 0;
+		for ( my $var = 0 ; $var < $filesToSkip && scalar @{$arrRef} != 0 ; $var++ ) {
 		    my $tmp = pop @{$arrRef};
-		    say STDERR "popped ". $tmp if $main::debug >=3 and $i == 0;
+		    push @ret, $tmp;
+		    say STDERR "popped ". $tmp if $main::debug >=1 and $i == 0;
 		}
 		my %cleanedFiles = map { unlink $_; ($_ => $?)  } @{$arrRef};
-		say STDERR Dumper(\%cleanedFiles) if $main::debug >=3 and $i == 0;
+		say STDERR Dumper(\%cleanedFiles) if $main::debug >=1 and $i == 0;
 		$i++;
 	}
+	return @ret;
 } # end clean_FilesByDate
 
 
@@ -132,10 +165,11 @@ sub clean_FilesByDate {
 # Parse options and arguments
 GetOptions(
 		   'debug|d+'     => \(our $debug = 0),
-		   'Timeout|T=i'  => \(our $Timeout = 30),
+		   'Timeout|T=i'  => \(our $Timeout = 60),
 		   'conffile|c=s' => \(our $conffile = ($ENV{'MK_CONFDIR'} // '/etc/check_mk') . '/omd-sane-cleanup.cfg'),
 		   'help|?|h'     => sub {pod2usage(-verbose => 99, -sections => 'NAME|SYNOPSIS|DESCRIPTION|OPTIONS|ARGUMENTS|VERSION')},
-) or pod2usage(2); pod2usage(2) if $ARGV[0];
+) or pod2usage(2); 
+pod2usage(2) if $ARGV[0];
 say STDERR "_main: parsed options to:" if $debug >= 1;
 say STDERR "_main: debug: ". $debug ."\n".
            "       Timeout: ". $Timeout ."\n". 
@@ -143,18 +177,15 @@ say STDERR "_main: debug: ". $debug ."\n".
 
 # Just in case of problems, let's not hang check_mk_agent
 $SIG{'ALRM'} = sub {
-	say "Plugin Timed out";
-	exit(2);
-}; alarm($Timeout);
+	_exit(2, 'Plugin Timed out');
+};
+alarm($Timeout);
 say STDERR "_main: set script timeout(". $Timeout .")" if $main::debug >= 1;
 
 ########################################################################
 # initialize some Variables
-our $now = DateTime->now;
-
-########################################################################
-# Do some sanity checking
-_exit(2, 'Environment Variable "OMD_ROOT" not set, we seem to run outside of an omd context') if !$ENV{OMD_ROOT};
+my $dt = DateTime->now();
+our $now = DateTime->last_day_of_month(year => $dt->year, month => $dt->month)->set_time_zone('UTC');
 
 ########################################################################
 # Read conf into $conf
@@ -162,48 +193,66 @@ our $conf;
 say STDERR "_main: try to parse config from: ". $conffile if $main::debug >= 1;
 try {
 	$conf = get_Config($conffile);
+	
 } catch {
-	_exit(2, 'Could not parse Config: '. $_);
+	say STDERR '_main: Could not parse Config: '. $_ . "\n_main: ...using defaults." if $main::debug >= 1;
+	$conf->{archivePath}   //= [ '/omd/sites/monitoring/var/check_mk/inventory_archive/' ];
+	$conf->{filesPerDay}   //= 1;
+	$conf->{daysPerMonth}  //= 30;
+	$conf->{MonthsPerYear} //= 12;
+	$conf->{maxYears}      //= 1;
+	$conf->{maxSize}       //= 400;
 };
+
 
 # chdir to inventory archive:
-say STDERR "_main: try to chdir into: ". $conf->{archivePath} if $main::debug >= 1;
-try {
-	chdir($conf->{archivePath}) || croak $!;
-} catch {
-	chomp;
-	_exit(2, 'Can not change to inventory_archive path ('. $_ .')');
-};
+for my $archivePath ( @{$conf->{archivePath}} ) {
+	say STDERR "_main: try to chdir into: ". $archivePath if $main::debug >= 1;
+	try {
+		chdir($archivePath) || croak $!;
+	} catch {
+		chomp;
+		_exit(2, 'Can not change to inventory_archive path ('. $_ .')');
+	};
+	my $beforeCleanupFiles = 0;
+	my $afterCleanupFiles = 0;
+	my $beforeCleanupSize = 1; # TODO
+	my $afterCleanupSize = 0; # TODO
 
-# do cleanup for each directory:
-my @dirs = <*>;
-say STDERR "_main: globed all dirs in inventory_archive, starting cleanup actions, with ". $dirs[0] if $main::debug >= 1;
-for my $dir ( @dirs ) {
-	
-	# each directory gets traversed
-	say STDERR "_main: ...processing ". $dir if $main::debug >= 2;
-    try {
-    	chdir($conf->{archivePath} .'/'. $dir) || croak $!;
-    	my @files = <*>;
-		say STDERR "_main: ...globed all files (". scalar @files .")" if $main::debug >= 2;
-		say STDERR "_main: ...". join(", ", @files) if $main::debug >=3;
+	# do cleanup for each directory in $archivePath:
+	my @dirs = glob q{*};
+	say STDERR "_main: globed all dirs in inventory_archive, starting cleanup actions, with ". $dirs[0] if $main::debug >= 1;
+	for my $dir ( @dirs ) {
 		
-		for my $type ( qw/days months years/ ) {
-			say STDERR '_main: ...try to clean Files by Date filter ('. $type .')' if $main::debug >=2;
-			try {
-				clean_FilesByDate($type, @files);
-			} catch {
-				chomp;
-				_exit(2, 'Failed to clean Files for '. $dir .': '. $_);
-			};
-		}
-    } catch {
-    	chomp;
-		_exit(2, 'Failed cleanup for '. $dir .'('. $_ .')');
-    };
+		# each directory gets traversed
+		say STDERR "_main: ...processing ". $dir if $main::debug >= 2;
+	    try {
+	    	chdir($archivePath .'/'. $dir) || croak $!;
+	    	my @files = glob q{*};
+	    	$beforeCleanupFiles += scalar @files;
+	    	
+			say STDERR "_main: ...globed all files (". scalar @files .")" if $main::debug >= 2;
+			say STDERR "_main: ...". join(", ", @files) if $main::debug >=3;
+			
+			for my $type ( qw/filesPerDay daysPerMonth MonthsPerYear maxYears/ ) {
+				say STDERR '_main: ...try to clean Files by Date filter ('. $type .')' if $main::debug >=2;
+				try {
+					@files = clean_FilesByDate($type, @files);
+				} catch {
+					chomp;
+					_exit(2, 'Failed to clean Files for '. $dir .'('. $_ .')');
+				};
+			}
+			@files = glob q{*};
+			$afterCleanupFiles += scalar @files;
+	    } catch {
+	    	chomp;
+			_exit(2, 'Failed cleanup for '. $dir .'('. $_ .')');
+	    };
+	}
+	$afterCleanupSize = 0; # TODO
+	say $archivePath ."|". $beforeCleanupFiles ."|". $afterCleanupFiles ."|1|0";
 }
-
-
 
 
 =pod
@@ -220,12 +269,14 @@ omd-sane-cleanup.pl --debug|-d[d...] --Timeout|-T=<int> --config|-c<path to conf
 
 =head1 DESCRIPTION
 
-This Plugin is actually a scipt to cleanup the omd inventory archive. But it is tightly integrated into check_mk
+This Plugin is actually a script to cleanup the omd inventory archive. But it is tightly integrated into check_mk
 so it is realized as plugin for the Agent.
 The cleanup follows these rules:
-1. statisfy the day constraint (e.g. keep last Report per day)
-2. statisfy the month constraint (e.g. keep all Reports left from 1. for the last 3 Months)
-3. statisfy the year constraint (e.g. keep all Reports left from 1. and 2. for 1 Year)
+1. statisfy the files per day constraint (e.g. keep last Report per day)
+2. statisfy the days per month constraint (e.g. keep all Reports left from 1. for the last 3 Months)
+3. statisfy the months per year constraint (e.g. keep all Reports left from 1. and 2. for 1 Year)
+4. statisfy the max year constraint (e.g. delete all reports older than 1 year)
+5. statisfy the max size constraint (e.g. delete all reports, starting with the oldest until we are below 400 MB per folder)
 
 =head1 OPTIONS
 

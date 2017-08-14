@@ -1,0 +1,31 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+import os
+import errno
+
+def bake_omd_sane_cleanup(opsys, conf, conf_dir, plugins_dir):
+    try:
+        os.makedirs(plugins_dir + "/43920/")
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
+    shutil.copy2(cmk.paths.local_agents_dir + "/plugins/omd-sane-cleanup.pl", plugins_dir + "/43920/omd-sane-cleanup.pl")
+    f = file(conf_dir + "/omd-sane-cleanup.cfg", "w")
+    f.write(agent_file_header)
+    f.write("# Config for omd-sane-cleanup.pl\n{")
+    f.write("	archivePath   => [%s],\n" % (", ".join('"%s"' % p for p in conf["archivePaths"])))
+    f.write("	filesPerDay   => %d, # 1st constraint\n" % conf["filesPerDay"])
+    f.write("	daysPerMonth  => %d, # 2nd constraint\n" % conf["daysPerMonth"])
+    f.write("	MonthsPerYear => %d, # 3rd constraint\n" % conf["MonthsPerYear"])
+    f.write("	maxYears      => %d, # 4th constraint\n" % conf["maxYears"])
+    f.write("	maxSize  => %d, #MB 5th constraint\n" % conf["maxSize"])
+    f.write("}\"\n")
+
+bakery_info["omd-sane-cleanup"] = {
+    "bake_function" : bake_omd_sane_cleanup,
+    "os"            : [ "linux" ],
+}

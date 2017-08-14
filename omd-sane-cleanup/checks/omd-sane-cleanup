@@ -1,0 +1,46 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+#
+# <<<omd-sane-cleanup:sep(124)>>>
+# /path/to/inventory_archive/|Files before|Files after|TotalSize before|TotalSize after
+# /omd/sites/monitoring/var/check_mk/inventory_archive/|500|40
+# /omd/sites/testsite/var/check_mk/inventory_archive/|100|10
+
+def inventory_omd_sane_cleanup(info):
+    inventory = []
+    for line in info:
+        if len(line) == 5:
+            path = line[0].split('/')
+            try:
+                inventory.append( ( path[2], {}) )
+            except IndexError:
+                inventory.append( (line[0], {}) )
+    return inventory
+
+def check_omd_sane_cleanup(item, params, info):
+    infotext = ""
+    perf     = []
+    for line in info:
+        if len(line) == 5:
+            path = line[0].split('/')
+            try:
+                extractedItem = path[2]
+            except IndexError:
+                extractedItem = line[0]
+            
+        if extractedItem == item:
+            filesInInventoryArchive = line[1] - line[2]
+            MBused = line[3] - line[4]
+            infotext += "There are %d files in the inventory_archive; Using %d MB; Cleaned up %d MB in our last run;" % (filesInInventoryArchive, line[4], MBcleaned )
+            perf.append(('files_in_archive', filesInInventoryArchive, None, None, None))
+            perf.append(('MB_cleaned', MBcleaned, None, None, None))
+            perf.append(('disk_size_used', line[4], None, None, None))
+
+    return 0, infotext, perf
+
+check_info['omd-sane-cleanup'] = {
+    "check_function"          : check_omd_sane_cleanup,
+    "inventory_function"      : inventory_omd_sane_cleanup,
+    "service_description"     : "OMD Cleanup %s",
+    "has_perfdata"            : True,
+}
