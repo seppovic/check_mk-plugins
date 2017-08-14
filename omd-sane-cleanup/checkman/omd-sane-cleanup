@@ -2,6 +2,7 @@ title: omd-sane-cleanup agent plugin
 agents: linux
 catalog: os/misc
 license: GPL
+author: Markus Weber <markus.weber@lfst.bayern.de>
 distribution: seppovic
 description:
  This Plugin is actually a script to cleanup the omd inventory archive. But it is tightly integrated into check_mk
@@ -16,3 +17,9 @@ description:
 inventory:
  one Service is created for every path in {archivePath} array.
  thresholds cant be defined.
+
+item:
+ either the site name or the complete path
+
+perfdata:
+ files_in_archive, MB_cleaned, disk_size_used

@@ -9,16 +9,17 @@ The cleanup follows these rules:
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/omd-sane-cleanup/omd-sane-cleanup-1.0.0.mkp'
-* OMD[SITENAME]:~$ check_mk -P install omd-sane-cleanup-1.0.0.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/omd-sane-cleanup/omd-sane-cleanup-1.0.1.mkp'
+* OMD[SITENAME]:~$ check_mk -P install omd-sane-cleanup-1.0.1.mkp
 
 # Requirements
 * omd/check_mk with inventory turned on.
 
 # TODO
-* cleanup on disk usage 
+* Step 5, cleanup on disk usage constraint
 
 # Known issues
 
 # History
+* 1.0.1 checkman and agent file tidy'ed.
 * 1.0.0 First release.
