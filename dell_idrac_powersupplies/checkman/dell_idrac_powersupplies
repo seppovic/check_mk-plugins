@@ -1,0 +1,16 @@
+title: Dell PowerEdge idrac: Power state per Power Supply Unit
+agents: snmp
+catalog: hw/server/dell
+license: GPL
+distribution: check_mk
+description:
+ This check monitors the state of power supply units via idarc mib
+ (IDRAC-MIB-SMIv2.mib) of Dell PowerEdge Servers.
+
+
+item:
+ The id of the power supply unit
+
+inventory:
+ All power units
+
