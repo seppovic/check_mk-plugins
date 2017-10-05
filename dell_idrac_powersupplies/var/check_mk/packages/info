@@ -6,6 +6,6 @@
  'name': 'dell_idrac_powersupplies',
  'num_files': 2,
  'title': u'dell_idrac_powersupplies',
- 'version': '1.0.0',
+ 'version': '1.1.0',
  'version.min_required': '1.2.8',
  'version.packaged': '1.4.0p12'}
