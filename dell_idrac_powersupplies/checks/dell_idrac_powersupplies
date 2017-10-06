@@ -6,8 +6,8 @@
 # Contact: markus.weber@lfst.bayern.de                          #
 # License: GPL                                                  #
 # File: slapd_stats                                             #
-# Version: 1.1.0                                                #
-# Revision: 05.10.2017                                          #
+# Version: 1.1.2                                                #
+# Revision: 06.10.2017                                          #
 # Description: This check monitors the state of power supply    #
 # units via idarc mib (IDRAC-MIB-SMIv2.mib) of Dell PowerEdge   #
 # Servers.                                                      #
@@ -37,7 +37,7 @@
 def inventory_dell_idrac_powersupplies(info):
     inventory = []
     powerSupply_info, amperageProbe_info = info
-    for PSUCidx, PSUSidx, PSUstatus, PSUvoltage in powerSupply_info:
+    for PSUCidx, PSUSidx, PSUstatus, PSUName, PSUvoltage in powerSupply_info:
         for line in powerSupply_info:
             item = "Chassis-%s-Slot-%s" % (line[0], line[1])
             inventory.append( ( item, None ) )
@@ -51,21 +51,29 @@ def check_dell_idrac_powersupplies(item, _no_params, info):
 
     try:
         powerSupply_info, amperageProbe_info = info
-        for PSUCidx, PSUSidx, PSUstatus, PSUvoltage in powerSupply_info:
-            for ACidx, ASidx, Avalue, Atype, Acrit, Awarn in amperageProbe_info:
-                if ACidx != PSUCidx or ASidx != PSUSidx:
-                    continue
+        for PSUCidx, PSUSidx, PSUstatus, PSUName, PSUvoltage in powerSupply_info:
+            for Avalue, Atype, AName in amperageProbe_info:
                 if PSUvoltage == '':
-                    PSUvoltage = "0"
+                    PSUvoltage = "230" # assume 230 volt for Hosts that are not providing the volt value
 
-                if item == "Chassis-%s-Slot-%s" % (PSUCidx, PSUSidx):
+                if item == "Chassis-%s-Slot-%s" % (PSUCidx, PSUSidx) and PSUName.split()[0] == AName.split()[0]:
+                    workmode = 2
+                elif item == "Chassis-%s-Slot-%s" % (PSUCidx, PSUSidx):
+                    workmode = 1
+                else:
+                    workmode = 0
+
+                if workmode >= 2:
                     if Atype == "23": #amperageProbeTypeIsPowerSupplyAmps(23),     -- type is Power Supply probe with reading in Amps
                         Watts = int(Avalue)/10.0 * int(PSUvoltage)
                     elif Atype == "24": #amperageProbeTypeIsPowerSupplyWatts(24),    -- type is Power Supply probe with reading in Watts
                         Watts = int(Avalue)
                     else:
-                        continue 
+                        Watts = 0
+                else:
+                    Watts = 0
 
+                if workmode >= 1:
                     if PSUstatus == "5" or PSUstatus == "6":
                         state = max(state,2)
                         infotext += "%s is dead or has failures" % ( item )
@@ -79,9 +87,10 @@ def check_dell_idrac_powersupplies(item, _no_params, info):
                                     % (item, PSUvoltage, Watts)
                     perfdata = [ ( "voltage", str(PSUvoltage)+"v", 0 ), ("Watts", str(Watts)+"w", 0 ) ]
                     return state, infotext, perfdata
+                
     except KeyError:
         return 3, "item not present anymore", []
-
+    
     return 3, "unknown power supply"
 
 check_info["dell_idrac_powersupplies"] = {
@@ -93,16 +102,14 @@ check_info["dell_idrac_powersupplies"] = {
       ( ".1.3.6.1.4.1.674.10892.5.4.600.12.1", [
         "1", # amperageProbechassisIndex
         "2", # amperageProbeIndex
-        "5", # powerSupplyStatus 0
+        "5", # powerSupplyStatus
+        "8", # powerSupplyLocationName
         "16", # Volt 2
       ]),
       ( ".1.3.6.1.4.1.674.10892.5.4.600.30.1", [
-        "1", # amperageProbechassisIndex
-        "2", # amperageProbeIndex
         "6", # amperageProbeReading
         "7", # amperageProbeType
-        "10", # amperageProbeUpperCriticalThreshold
-        "11", # amperageProbeUpperNonCriticalThreshold
+        "8", # amperageProbeLocationName
       ]),
     ],
     "snmp_scan_function"    : lambda oid: oid('.1.3.6.1.2.1.1.2.0') == ".1.3.6.1.4.1.674.10892.5",
