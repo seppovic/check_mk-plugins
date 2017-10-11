@@ -23,7 +23,7 @@ then
 	echo "<<<nfsperf>>>"
 	cat /proc/self/mountstats | awk -- '
 BEGIN { N=0 }
-/^device .* nfs / { N=N+1; mp[N] = $2 } 
+/^device .* (nfs|nfs[0-9]) / { N=N+1; mp[N] = $2 } 
 /bytes:/ { bytes[N] = $0 }
 /events:/ { events[N] = $0 }
 /READ:/ { read[N] = $0}
