@@ -6,8 +6,8 @@
 # Contact: markus.weber@lfst.bayern.de                          #
 # License: GPL                                                  #
 # File: slapd_stats                                             #
-# Version: 1.1.2                                                #
-# Revision: 06.10.2017                                          #
+# Version: 1.1.3                                                #
+# Revision: 19.10.2017                                          #
 # Description: This check monitors the state of power supply    #
 # units via idarc mib (IDRAC-MIB-SMIv2.mib) of Dell PowerEdge   #
 # Servers.                                                      #
@@ -48,6 +48,7 @@ def check_dell_idrac_powersupplies(item, _no_params, info):
     state = 0
     infotext = ""
     perfdata = []
+    tries = []
 
     try:
         powerSupply_info, amperageProbe_info = info
@@ -76,21 +77,26 @@ def check_dell_idrac_powersupplies(item, _no_params, info):
                 if workmode >= 1:
                     if PSUstatus == "5" or PSUstatus == "6":
                         state = max(state,2)
-                        infotext += "%s is dead or has failures" % ( item )
+                        infotext = "%s is dead or has failures" % ( item )
                     elif PSUstatus == "4":
                         state = max(state,1)
                     elif PSUstatus == "1" or PSUstatus == "2":
                         state = 3
                     else:
                         state = 0
-                        infotext += "%s is running on %s volts and with %d Watts." \
+                        infotext = "%s is running on %s volts and with %d Watts." \
                                     % (item, PSUvoltage, Watts)
-                    perfdata = [ ( "voltage", str(PSUvoltage)+"v", 0 ), ("Watts", str(Watts)+"w", 0 ) ]
-                    return state, infotext, perfdata
-                
+                    perfdata = [ ("Watts", str(Watts)+"w", 0 ), ( "voltage", str(PSUvoltage)+"v", 0 ) ]
+                    tries.append([workmode, (state, infotext, perfdata)])
+
     except KeyError:
         return 3, "item not present anymore", []
-    
+
+    # its possible that amperageProbe_info elements are not in the same order as the powerSupply_info elements,
+    # so we have to filter the comparisations from above on the highest workmode
+    workmode, ret = max(tries, key=lambda item: item[0])
+    return ret
+
     return 3, "unknown power supply"
 
 check_info["dell_idrac_powersupplies"] = {
