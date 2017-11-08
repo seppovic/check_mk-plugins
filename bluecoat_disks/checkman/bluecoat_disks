@@ -1,0 +1,26 @@
+title: Monitor the status of all physical Disks of a BlueCoat SG
+agents: snmp
+catalog: hw/network/bluecoat
+author: Markus Weber <markus.weber@lfst.bayern.de>
+license: GPL
+distribution: check_mk
+description:
+ This check uses SNMP to monitor the status of each Disk on an Bluecoat Device 
+ which provides access to the deviceDiskMIB (.1.3.6.1.4.1.3417.2.2.1.1.1.1)
+
+inventory:
+ one check will be created for each Disk and the status is reported.
+
+parameters:
+ parameters(dict): A dictionary with the following default values, that can be overriden: 
+ factory_settings["bluecoat_disks_levels"] = {
+    "1" : (0, "present"),
+    "2" : (0, "initializing"),
+    "3" : (0, "inserted"),
+    "4" : (2, "offline"),
+    "5" : (2, "removed"),
+    "6" : (2, "not-present"),
+    "7" : (0, "empty"),
+    "8" : (2, "bad"),
+    "9" : (3, "unknown"),
+ }

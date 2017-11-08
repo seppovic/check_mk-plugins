@@ -1,0 +1,113 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+#################################################################
+#---------------------------------------------------------------#
+# Author: Markus Weber                                          #
+# Contact: markus.weber@lfst.bayern.de                          #
+# License: GPL                                                  #
+# File: bluecoat_disks                                          #
+# Version: 1.0                                                  #
+# Revision: 08.11.2017                                          #
+# Description: Monitor the status of all physical Disks of a    #
+# BlueCoat SG                                                   #
+#################################################################
+
+
+# $ snmpwalk -v2c -c public BLUECOATSG.IP .1.3.6.1.4.1.3417.2.2.1.1.1.1
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.2.1 = INTEGER: 1
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.2.2 = INTEGER: 1
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.2.3 = INTEGER: 1
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.2.4 = INTEGER: 1
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.3.1 = INTEGER: 1
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.3.2 = INTEGER: 1
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.3.3 = INTEGER: 8
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.3.4 = INTEGER: 1
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.4.1 = Timeticks: (6987808) 19:24:38.08
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.4.2 = Timeticks: (6987808) 19:24:38.08
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.4.3 = Timeticks: (6987808) 19:24:38.08
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.4.4 = Timeticks: (6987808) 19:24:38.08
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.5.1 = STRING: "TOSHIBA "
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.5.2 = STRING: "TOSHIBA "
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.5.3 = STRING: "TOSHIBA "
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.5.4 = STRING: "TOSHIBA "
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.6.1 = STRING: "XXXXXXXXXX      "
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.6.2 = STRING: "XXXXXXXXXX      "
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.6.3 = STRING: "XXXXXXXXXX      "
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.6.4 = STRING: "XXXXXXXXXX      "
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.7.1 = STRING: "0106"
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.7.2 = STRING: "0108"
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.7.3 = STRING: "0106"
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.7.4 = STRING: "0106"
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.8.1 = STRING: "XXXXXXXXXXXX"
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.8.2 = STRING: "XXXXXXXXXXXX"
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.8.3 = STRING: "XXXXXXXXXXXX"
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.8.4 = STRING: "XXXXXXXXXXXX"
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.9.1 = Counter32: 512
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.9.2 = Counter32: 512
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.9.3 = Counter32: 0
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.9.4 = Counter32: 512
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.10.1 = Counter32: 1953525168
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.10.2 = Counter32: 1953525168
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.10.3 = Counter32: 0
+# .1.3.6.1.4.1.3417.2.2.1.1.1.1.10.4 = Counter32: 1953525168
+
+
+factory_settings["bluecoat_disks_levels"] = { 
+    "present" : 0,
+    "initializing" : 0,
+    "inserted" : 0,
+    "offline" : 2,
+    "removed" : 2,
+    "not-present" : 2,
+    "empty" : 0,
+    "bad" : 2,
+    "unknown" : 3,
+}
+
+def inventory_bluecoat_disks(info):
+    inv = []
+    # Status, Vendor, Product, SN, BlockSize, BlockCount, Index(oid_end)
+    for line in info:
+        inv.append(( line[6], None ))
+    return inv 
+
+def check_bluecoat_disks(item, params, info):
+    state_table = {
+        "1" : "present",
+        "2" : "initializing",
+        "3" : "inserted",
+        "4" : "offline",
+        "5" : "removed",
+        "6" : "not-present",
+        "7" : "empty",
+        "8" : "bad",
+        "9" : "unknown",
+    }
+
+    for Status, Vendor, Product, SN, BlockSize, BlockCount, Index in info:
+        if Index == item:
+            if int(BlockSize) != 0:
+                Size = int(BlockSize) * int(BlockCount) / 1073741824.0 # in GB
+            else:
+                Size = 0.0
+            Status = state_table[Status]
+            return params[Status], "[Disk %s - %s %s] S/N: %s, Size: %.2f GB, Disk state: %s" % (Index, Vendor, Product, SN, Size, Status) 
+        
+check_info["bluecoat_disks"] = {
+     "check_function"           : check_bluecoat_disks,
+     "group"                    : "bluecoat_disks",
+     "inventory_function"       : inventory_bluecoat_disks,
+     "service_description"      : "Disk Physical Disk %s",
+     "default_levels_variable"  : "bluecoat_disks_levels",
+     "snmp_scan_function":      \
+           lambda oid: '1.3.6.1.4.1.3417.1.1' in oid(".1.3.6.1.2.1.1.2.0"),
+     "snmp_info"                : (".1.3.6.1.4.1.3417.2.2.1.1.1.1", [
+           "3",  #deviceDiskStatus
+           "5",  #deviceDiskVendor
+           "6",  #deviceDiskProduct
+           "8",  #deviceDiskSerialN
+           "9",  #deviceDiskBlockSize
+           "10", #deviceDiskBlockCount
+           OID_END
+     ], ),
+}
