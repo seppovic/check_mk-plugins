@@ -1,17 +1,25 @@
 #!/bin/bash
 
-#set -x
 SMTCONF="/etc/smt.conf"
 
-cfg_parser ()
-{
+function cfg_parser () {
+    shopt -p extglob &> /dev/null
+    CHANGE_EXTGLOB=$?
+    if [ $CHANGE_EXTGLOB = 1 ] ; then
+        shopt -s extglob
+    fi
     ini="$(<$1)"                # read the file
-    ini="${ini//[/\[}"          # escape [
-    ini="${ini//]/\]}"          # escape ]
+    if (( ${BASH_VERSION%%.*} >= 4 )) ; then
+        ini="${ini//[/\\[}"          # escape [
+        ini="${ini//]/\\]}"          # escape ]
+    else
+        ini="${ini//[/\[}"          # escape [
+        ini="${ini//]/\]}"          # escape ]
+    fi
     IFS=$'\n' && ini=( ${ini} ) # convert to line-array
     ini=( ${ini[*]//;*/} )      # remove comments with ;
-    ini=( ${ini[*]/\    =/=} )  # remove tabs before =
-    ini=( ${ini[*]/=\   /=} )   # remove tabs be =
+    ini=( ${ini[*]/\ =/=} )  # remove tabs before =
+    ini=( ${ini[*]/=\	/=} )   # remove tabs be =
     ini=( ${ini[*]/\ =\ /=} )   # remove anything with a space around =
     ini=( ${ini[*]/#\\[/\}$'\n'cfg.section.} ) # set section prefix
     ini=( ${ini[*]/%\\]/ \(} )    # convert text2function (1)
@@ -23,6 +31,11 @@ cfg_parser ()
     ini[0]="" # remove first element
     ini[${#ini[*]} + 1]='}'    # add the last brace
     eval "$(echo "${ini[*]}")" # eval the result
+    EVAL_STATUS=$?
+    if [ $CHANGE_EXTGLOB = 1 ] ; then
+        shopt -u extglob
+    fi
+    return $EVAL_STATUS
 }
 
 if [ -f $SMTCONF ]; then
