@@ -1,0 +1,106 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+#################################################################
+# Author: Markus Weber                                          #
+# Contact: markus.weber@lfst.bayern.de                          #
+# License: GPL                                                  #
+# File: smt-custom-repos                                        #
+# Version: 1.1.0                                                #
+# Revision: 13.11.2017                                          #
+# Description: You can define assignments between products and  #
+# repository/catalog in SUSE SMT which this check monitors for  #
+# its presence.
+#################################################################
+
+def parse_smt_custom_repos(info):
+    parsed = {
+        "Catalogs" : {},
+        "ProductCatalogs" : [],
+        "Products" : {},
+    }
+    run_C = False
+    run_PC = False
+    run_P = False
+
+    for line in info:
+        if line == ['[Catalogs]']:
+            run_C = True
+            run_PC = False
+            run_P = False
+            continue
+        if line == ['[ProductCatalogs]']:
+            run_C = False
+            run_PC = True
+            run_P = False
+            continue
+        if line == ['[Products]']:
+            run_C = False
+            run_PC = False
+            run_P = True
+            continue
+
+        if run_C:
+            parsed["Catalogs"][line[1]] = line[0]
+        if run_PC:
+            parsed["ProductCatalogs"].append((line[0], line[1]))
+        if run_P:
+            try:
+                parsed["Products"]["%s/%s/%s" % (line[1], line[2], line[3])] = line[0]
+            except:
+                try:
+                    parsed["Products"]["%s/%s" % (line[1], line[2])] = line[0]
+                except:
+                    continue
+
+    return parsed
+
+def inventory_smt_custom_repos(info):
+    # the agent section is only present when the agent has
+    # detected that zypper is installed, therefore the check
+    # can always register
+    return [(None,{})]
+
+def check_smt_custom_repos(_noitem, params, parsed):
+    infotext  = ''
+    multiline = ''
+    state     = 0
+    countername = 'smt_custom_repos.oldProductID.'
+    this_time = int(time.time())
+
+    for wantedCatalog, wantedProducts in params:
+        if wantedCatalog in parsed["Catalogs"].keys():
+            CatalogID = parsed["Catalogs"][wantedCatalog]
+            for wantedProduct in wantedProducts:
+                if wantedProduct in parsed["Products"]:
+                    countername = countername + wantedProduct + "." + wantedCatalog
+                    ProductID = parsed["Products"][wantedProduct]
+                    if (ProductID, CatalogID) in parsed["ProductCatalogs"]:
+                        multiline += "%s assigned to %s as expected.\n" % (wantedCatalog, wantedProduct)
+                        set_item_state(countername, (this_time, int(ProductID)))
+                    else:
+                        oldProductID = get_item_state(countername, None)
+                        if oldProductID is None:
+                            oldProductID = (this_time, 0)
+                        state = max(state,2)
+                        infotext += "%s(ID=%d) not assigned to %s(ID=%d)(!!)- ProductID in DB is %s; " % (wantedCatalog, int(CatalogID), wantedProduct, int(ProductID), oldProductID[1])
+                else:
+                    state = max(state,1)
+                    infotext += "Product \"%s\" not found in SMT Configuration (!), check your spelling in WATO rule; " % wantedProduct
+        else:
+            state = max(state,1)
+            infotext += "Catalog \"%s\" not found in SMT Configuration(!); " % (wantedCatalog)
+
+    if infotext == '':
+        return (state, "All Repositoris are applied to the expected Catalogs as specified in WATO rules \n" + multiline)
+    else:
+        return (state, infotext + "\n" + multiline)
+ 
+
+check_info['smt_custom_repos'] = {
+#    "default_levels_variable" : "smt_custom_repos_defaults",
+    "parse_function"          : parse_smt_custom_repos,
+    "inventory_function"      : inventory_smt_custom_repos,
+    "check_function"          : check_smt_custom_repos,
+    "service_description"     : "SMT Catalog Mapping status",
+    "group"                   : "smt_custom_repos",
+}

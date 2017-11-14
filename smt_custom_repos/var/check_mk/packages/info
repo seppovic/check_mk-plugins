@@ -1,0 +1,13 @@
+{'author': u'Markus Weber',
+ 'description': u'You can define assignments between products and repository/catalog in SUSE SMT which this check monitors for its presence.\n',
+ 'download_url': 'https://github.com/seppovic/check_mk-plugins/tree/master/smt_custom_repos',
+ 'files': {'agents': ['plugins/linux/smt_custom_repos.sh'],
+           'checkman': ['smt_custom_repos'],
+           'checks': ['smt_custom_repos'],
+           'web': ['plugins/wato/check_parameters_smt_custom_repos.py']},
+ 'name': 'smt_custom_repos',
+ 'num_files': 4,
+ 'title': u'smt_custom_repos',
+ 'version': '1.1.0',
+ 'version.min_required': '1.2.8',
+ 'version.packaged': '1.4.0p12'}

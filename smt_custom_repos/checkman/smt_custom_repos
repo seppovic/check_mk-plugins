@@ -1,0 +1,16 @@
+title: smt_custom_repos
+agents: linux
+catalog: app/SUSE
+license: GPL
+distribution: seppovic
+description:
+ You can define assignments between products and
+ repository/catalog in SUSE SMT which this check monitors for
+ its presence.
+ 
+inventory:
+ One service will be created showing the mapping status of custom Repositories/Catalogs to Products.
+
+item:
+ None
+
