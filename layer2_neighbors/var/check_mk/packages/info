@@ -1,0 +1,11 @@
+{'author': u'Markus Weber',
+ 'description': u'extension to Maximilian Thoma\'s "cisco_inv_cdp" plugin (http://www.lanbugs.de/howtos/monitoring-check_mk/inventory/check_mk-inventory-cisco-cdp-neighbors-extension/) which makes it hopefully more general for Linux Hosts too.\n',
+ 'download_url': 'https://github.com/seppovic/check_mk-plugins/tree/master/layer2_neighbors',
+ 'files': {'inventory': ['lldp', 'cdp'],
+           'web': ['plugins/views/layer2_neighbors.py']},
+ 'name': 'layer2_neighbors',
+ 'num_files': 3,
+ 'title': u'layer2_neighbors',
+ 'version': '1.0.1',
+ 'version.min_required': '1.2.8',
+ 'version.packaged': '1.4.0p12'}

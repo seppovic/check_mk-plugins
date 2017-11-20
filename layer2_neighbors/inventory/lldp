@@ -1,0 +1,41 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+def inv_lldp(info):
+    inventoryLeaf = inv_tree("networking.neighbors:")
+
+
+    item = {}
+    for line in info:
+        key, value = line[0].split("=")
+        value += " ".join(line[1:])
+        arr = key.split(".")
+#        print key + " " + value + " " + "(" + " ".join(arr) + ")"
+        if arr[1] not in item:
+            item[str(arr[1])] = {}
+
+        if arr[0] == "lldp":
+            if arr[2] == "chassis":
+                if arr[3] == "name":
+                    item[str(arr[1])]["device"] = value
+                if arr[3] == "mac":
+                    item[str(arr[1])]["r_if_mac"] = value
+            if arr[2] == "port":
+                if arr[3] == "local":
+                    item[str(arr[1])]["r_if_name"] = value
+                if arr[3] == "descr":
+                    item[str(arr[1])]["r_if_desc"] = value
+
+    for interface in item.keys():
+#        print "item[" + interface + "][device] = '" + item[interface].get("device", "nothing") + "'"
+        inventoryLeaf.append({
+          "l_if_name"  : interface,
+          "r_device" : item[interface].get("device", ""),
+          "r_if_name" : item[interface].get("r_if_name", ""),
+          "r_if_mac" : item[interface].get("r_if_mac", ""),
+          "r_if_desc" : item[interface].get("r_if_desc", "")
+        })
+
+inv_info['lldp'] = {
+    "inv_function" : inv_lldp,
+}
