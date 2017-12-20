@@ -72,10 +72,10 @@ def check_jolokia_generic(item, params, info):
     itemParts = item.split()
     output, perf, status, workvalues, workitems, workmodes = "", [], 0, [], [], []
 
-    if len(itemParts) == 4:
+    if len(itemParts) == 4 and len(parsed) > 0:
         if itemParts[2] in parsed[itemParts[0]]['apps'][itemParts[1]]['servlets']:
             base = parsed[itemParts[0]]['apps'][itemParts[1]]['servlets'].get( itemParts[2], {} )
-    elif len(itemParts) == 3:
+    elif len(itemParts) == 3 and len(parsed) > 0:
         if itemParts[1] in parsed[itemParts[0]]['apps']:
             base = parsed[itemParts[0]]['apps'].get( itemParts[1], {} )
     elif len(itemParts) == 2:
