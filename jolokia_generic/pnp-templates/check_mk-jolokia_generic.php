@@ -14,16 +14,17 @@ $def[1] = '';
 # throw new Kohana_exception(print_r($this->DS,true));
 
 # sort by ACT (Last) Value. Highest Value goes into Background.
-usort($this->DS, function($a, $b) {
+function sortByOrder($a, $b) {
     return $b['ACT'] - $a['ACT'];
-});
+}
+usort($this->DS, 'sortByOrder');
 
 foreach ($this->DS as $KEY=>$VAL) {
 
-        $def[1] .= rrd::def     ("var$KEY", $this->DS[$KEY]['RRDFILE'], $this->DS[$KEY]['DS'], "AVERAGE");
+	$def[1] .= rrd::def     ("var$KEY", $this->DS[$KEY]['RRDFILE'], $this->DS[$KEY]['DS'], "AVERAGE");
         $def[1] .= rrd::area    ("var$KEY", $colors[$j]."70", rrd::cut($this->DS[$KEY]["NAME"],40));
         $def[1] .= rrd::line1   ("var$KEY", "#000");
         $def[1] .= rrd::gprint  ("var$KEY", array("AVERAGE", "MAX", "LAST"), "%5.0lf");
-        $j++;
+	$j++;
 }
 ?>

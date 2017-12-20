@@ -1,0 +1,13 @@
+{'author': u'Markus Weber',
+ 'description': u'This plugin extends the original jolokia_metrics distributed with check_mk. It adds the functionality to include userdefined MBeans/Attributes to the monitoring.\n',
+ 'download_url': 'https://github.com/seppovic/check_mk-plugins/tree/master/jolokia_generic',
+ 'files': {'checkman': ['jolokia_generic'],
+           'checks': ['jolokia_generic'],
+           'pnp-templates': ['check_mk-jolokia_generic.php'],
+           'web': ['plugins/wato/check_parameters_jolokia_generic.py']},
+ 'name': 'jolokia_generic',
+ 'num_files': 4,
+ 'title': u'jolokia_generic',
+ 'version': '2.2.5',
+ 'version.min_required': '1.2.5i5p2',
+ 'version.packaged': '1.4.0p21'}

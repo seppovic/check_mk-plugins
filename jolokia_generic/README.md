@@ -6,8 +6,8 @@ jolokia.cfg in agents/cfg_examples/ folder for an example.
 
 # Installation
 * $ su - SITENAME
-* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/jolokia_generic/jolokia_generic-2.2.4.mkp'
-* OMD[SITENAME]:~$ check_mk -P install jolokia_generic-2.2.4.mkp
+* OMD[SITENAME]:~$ wget 'https://github.com/seppovic/check_mk-plugins/raw/master/jolokia_generic/jolokia_generic-2.2.5.mkp'
+* OMD[SITENAME]:~$ check_mk -P install jolokia_generic-2.2.5.mkp
 
 # Requirements
 * Application server with [jolokia](http://jolokia.org/) deployed.
@@ -18,6 +18,7 @@ jolokia.cfg in agents/cfg_examples/ folder for an example.
 # Known issues
 
 # History
+* 2.2.5 Fixed Bug which makes the check crash if gauge value is no number and merged commit to use Counterwrapps as intended. Thx to @redflo
 * 2.2.4 Fixed Bug in check plugin, using MKCounterwrapped correctly now.
 * 2.2.3 Fixed Bug in WATO, not using named Parameters anymore, makes this plugin usable with check_mk pre 1.2.7
 * 2.2.2 Fixed Bug in WATO configuration and brought agent in sync with git.mathias-kettner.de

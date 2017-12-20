@@ -6,8 +6,8 @@
 # Contact: markus.weber@lfst.bayern.de                          #
 # License: GPL                                                  #
 # File: jolokia_generic                                         #
-# Version: 2.2.2                                                #
-# Revision: 08.07.2015                                          #
+# Version: 2.2.5                                                #
+# Revision: 20.12.2017                                          #
 # Description: This Check allows to monitor any given           #
 #  MBean/Attribute of an Application server.                    #
 #################################################################
@@ -79,8 +79,7 @@ def check_jolokia_generic(item, params, info):
         if itemParts[1] in parsed[itemParts[0]]['apps']:
             base = parsed[itemParts[0]]['apps'].get( itemParts[1], {} )
     elif len(itemParts) == 2:
-        if itemParts[0] in parsed:
-            base = parsed.get( itemParts[0], {} )
+        base = parsed.get( itemParts[0], {} )
     else:
         base = {}
 
@@ -129,7 +128,12 @@ def check_jolokia_generic(item, params, info):
             else:
                 output += "%s is %s; " % (workitems[i], workvalues[i])
 
-            perf.append((workitems[i], workvalues[i]))
+            try:
+                workvalues[i] += 1
+                workvalues[i] -= 1
+                perf.append((workitems[i], workvalues[i]))
+            except TypeError:
+                pass
 
     elif workmodes[0] == 'string':
         for i in range(len(workitems)):
