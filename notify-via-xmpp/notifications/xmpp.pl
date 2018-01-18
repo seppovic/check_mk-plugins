@@ -132,8 +132,8 @@ sub xmpp_login{
 		hostname		=> $host,
 		ssl_verify		=> 0x00,
 		connectiontype	=> 'tcpip',
-		componentname	=> $resource,
-		srv				=> 1, # enable SRV lookups
+		#componentname	=> $resource,
+		#srv				=> 1, # enable SRV lookups
 	};
 
 	if ($security eq "TLS"){
@@ -149,7 +149,7 @@ sub xmpp_login{
     my @res;
     warn "D-xmpp_login: loging in with this arguments:\n". Dumper($arghash) if $debug;
 	@res = $cnx->Connect(%$arghash);
-	unless (@res ){
+	unless (@res){
 		warn "D-xmpp_login: Could not connect to server '$host': ".($cnx->GetErrorCode()||$@);
 		xmpp_logout($cnx, $debug);
 		exit(2);
@@ -173,18 +173,17 @@ sub xmpp_send {
 
     my $packet = '<message to=\''. $rcpt . '\'';
     if($rcpt_is_room){
-	$packet .= ' type=\'groupchat\'>';
-	# set the presence
-	my $pres = new Net::XMPP::Presence;
-	my $res = $pres->SetTo("$rcpt/$user");
-
-	$cnx->Send($pres);
+		$packet .= ' type=\'groupchat\'>';
+		# set the presence
+		my $pres = new Net::XMPP::Presence;
+		my $res = $pres->SetTo("$rcpt/$user");
+		$cnx->Send($pres);
     } else {
-	$packet .= ' type=\'message\'>';
+		$packet .= ' type=\'message\'>';
     }
-    $packet .= $msg;
-    $packet .= '</message>';
 
+	$packet .= $msg;
+	$packet .= '</message>';
 
     # for some reason, Send does not return anything
     my $res = $cnx->SendXML($packet);
@@ -200,13 +199,13 @@ sub main {
 
 
     # Set defaults:
-    my $debug = $p{PARAMETER_DEBUG} || undef;
+    my $debug = defined $p{PARAMETER_DEBUG} ? 1: undef;
     warn "D-main: xmpp notification handler start, got the following env_vars:\n". Dumper(\%p) if $debug;
 
     my $timeout = $p{PARAMETER_TIMEOUT} || 3;
 
     # Set alarm to kill the script.
-    warn "D-main: setting Timout for the notification handler - " . $timeout . "s" if $debug;
+    warn "D-main: setting Timeout for the notification handler - " . $timeout . "s" if $debug;
     alarm($timeout);
 
     # Further defaults:
@@ -234,10 +233,10 @@ sub main {
     my $cnx = xmpp_login( $p{PARAMETER_XMPPSERVER}, $p{PARAMETER_USER}, $p{PARAMETER_PASSWORD}, $resource, $security, $debug );
 
     # send message to recipient or chatroom
-    xmpp_send ($cnx, $rcpt, $p{PARAMETER_USER}, $message, $rcpt_is_room, $debug);
+    xmpp_send( $cnx, $rcpt, $p{PARAMETER_USER}, $message, $rcpt_is_room, $debug );
 
     # logout and exit
-    xmpp_logout($cnx, $debug);
+    xmpp_logout( $cnx, $debug );
     exit(0);
 }
 main();
@@ -287,7 +286,7 @@ xmpp.pl - sends notifications via xmpp
 
 =head1 VERSION
 
-1.1.2
+1.1.3
 
 =head1 AUTHOR
 
