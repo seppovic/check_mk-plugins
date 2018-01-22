@@ -31,8 +31,15 @@
 # Default levels for low warn, low crit, high warn, high crit and a empty list for string mode
 factory_settings["jolokia_generic_default_levels"] = { "levels" : [(-1.0, -1.0, 0.0, 0.0, '')], "expectedStrings" : [] }
 
+# Fix info list lenghts if string type contains whitespaces
+def fix_strings_with_whitespaces(info):
+    for idx, line in enumerate(info):
+        if len(line) > 3:
+            info[idx] = line[0], line[1], " ".join(line[2:])
+
 def inventory_jolokia_generic(info):
     inv = []
+    fix_strings_with_whitespaces(info)
     parsed = jolokia_metrics_parse(info)
 
     for inst, vals in parsed.items():
@@ -68,6 +75,7 @@ def inventory_jolokia_generic(info):
 
 def check_jolokia_generic(item, params, info):
     import re
+    fix_strings_with_whitespaces(info)
     parsed = jolokia_metrics_parse(info)
     itemParts = item.split()
     output, perf, status, workvalues, workitems, workmodes = "", [], 0, [], [], []
