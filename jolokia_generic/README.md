@@ -18,7 +18,8 @@ jolokia.cfg in agents/cfg_examples/ folder for an example.
 # Known issues
 
 # History
-* 2.2.5 Fixed Bug which makes the check crash if gauge value is no number and merged commit to use Counterwrapps as intended. Thx to @redflo
+* 2.2.6 Fixed whitespace handling in string mode. Thx to @M-a-x-G.
+* 2.2.5 Fixed Bug which makes the check crash if gauge value is no number and merged commit to use Counterwrapps as intended. Thx to @redflo.
 * 2.2.4 Fixed Bug in check plugin, using MKCounterwrapped correctly now.
 * 2.2.3 Fixed Bug in WATO, not using named Parameters anymore, makes this plugin usable with check_mk pre 1.2.7
 * 2.2.2 Fixed Bug in WATO configuration and brought agent in sync with git.mathias-kettner.de
