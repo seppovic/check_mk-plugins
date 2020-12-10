@@ -1,3 +1,6 @@
+# Obsolete!
+You might want to use the [mk_jolokia.py](https://github.com/tribe29/checkmk/blob/master/agents/plugins/mk_jolokia.py) plugin shipped with check_mk since at least 1.6.0 as it is actively maintained.
+
 # jolokia_generic
 This plugin extends the original jolokia_metrics distributed with check_mk.
 It adds the functionality to include userdefined MBeans/Attributes to the 
